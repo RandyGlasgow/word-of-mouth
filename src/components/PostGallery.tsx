@@ -70,12 +70,14 @@ export function PostGallery({
             onClick={() => setIndex(0)}
           >
             <Image
+              quality={10}
               src={cover.url}
               alt={cover.alt}
               width={cover.width}
               height={cover.height}
               sizes="(min-width: 1024px) 60vw, 100vw"
               priority
+              loading="eager"
             />
           </button>
         </figure>
@@ -97,12 +99,7 @@ export function PostGallery({
         </div>
       )}
 
-      <Lightbox
-        open={index >= 0}
-        close={() => setIndex(-1)}
-        index={index}
-        slides={slides}
-      />
+      <Lightbox open={index >= 0} close={() => setIndex(-1)} index={index} slides={slides} />
     </>
   )
 }
@@ -116,7 +113,7 @@ function renderNextImage(
       className="gallery__tile"
       style={{ width: '100%', position: 'relative', aspectRatio: `${width} / ${height}` }}
     >
-      <Image fill src={photo.src} alt={alt} title={title} sizes={sizes} />
+      <Image quality={80} fill src={photo.src} alt={alt} title={title} sizes={sizes} />
     </div>
   )
 }
