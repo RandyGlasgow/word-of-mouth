@@ -494,14 +494,56 @@ a.tag:hover {
 
 .gallery {
   margin-top: 2.5rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-  gap: 0.75rem;
 }
 
-.gallery img {
+/* Cover doubles as a lightbox trigger on the post page. */
+.cover--interactive {
+  cursor: pointer;
+}
+
+/* Unstyled button wrapper so the cover trigger is keyboard-operable. */
+.cover__button {
+  display: block;
   width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.cover__button:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+
+/* react-photo-album masonry tile: next/image fills an aspect-ratio box. */
+.gallery__tile {
+  overflow: hidden;
   border: 1px solid var(--rule);
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.gallery__tile:hover {
+  transform: scale(1.02);
+  opacity: 0.92;
+}
+
+/* yet-another-react-lightbox theme overrides to match the site palette. */
+.yarl__container {
+  background: color-mix(in srgb, var(--ink) 92%, black);
+}
+
+.yarl__button {
+  color: var(--paper);
+  filter: none;
+}
+
+.yarl__button:hover {
+  color: var(--green);
 }
 
 /* ---- Right rail --------------------------------------------------------- */

@@ -4,9 +4,9 @@ import { notFound } from 'next/navigation'
 import React from 'react'
 
 import { Breadcrumbs } from '@/components/Breadcrumbs'
-import { Cover } from '@/components/Cover'
 import { formatDate } from '@/components/format'
 import { mediaInfo } from '@/components/media'
+import { PostGallery, type GalleryPhoto } from '@/components/PostGallery'
 import { Rail } from '@/components/Rail'
 import {
   authorHref,
@@ -53,9 +53,12 @@ export default async function PostPage({
   if (!post) notFound()
 
   const moreFromCity = await getMoreFromCity(post.city.id, post.id)
-  const gallery = (post.gallery ?? [])
-    .map((m) => mediaInfo(m as number | Media))
-    .filter((m): m is NonNullable<typeof m> => m !== null)
+  const photos: GalleryPhoto[] = [post.cover, ...(post.gallery ?? [])]
+    .map((m) => mediaInfo(m as number | Media | null | undefined))
+    .filter(
+      (m): m is { url: string; alt: string; width: number; height: number } =>
+        m !== null && m.width !== undefined && m.height !== undefined,
+    )
 
   return (
     <div className="wrap">
@@ -83,20 +86,11 @@ export default async function PostPage({
           </p>
           <p className="article__date">{formatDate(post.publishedDate)}</p>
 
-          <Cover media={post.cover} />
-
-          <div className="article__body">
-            <RichText data={post.body} />
-          </div>
-
-          {gallery.length > 0 && (
-            <div className="gallery">
-              {gallery.map((img, i) => (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img key={i} src={img.url} alt={img.alt} />
-              ))}
+          <PostGallery photos={photos}>
+            <div className="article__body">
+              <RichText data={post.body} />
             </div>
-          )}
+          </PostGallery>
         </article>
 
         <Rail post={post} moreFromCity={moreFromCity} />

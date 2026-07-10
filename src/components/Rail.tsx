@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 
@@ -27,8 +28,7 @@ export function Rail({
         <p className="rail__label">Written by</p>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {avatar && (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img className="avatar" src={avatar.url} alt={avatar.alt} />
+            <Image className="avatar" src={avatar.url} alt={avatar.alt} width={48} height={48} />
           )}
           <span className="rail__name">
             <Link href={authorHref(post.author)}>{post.author.name}</Link>
