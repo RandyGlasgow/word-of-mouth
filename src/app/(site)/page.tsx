@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import React from 'react'
 
+import { HeroTagline } from '@/components/HeroTagline'
 import { PostList } from '@/components/PostList'
 import { getRecentPosts, getYears } from '@/lib/queries'
 
@@ -11,10 +12,7 @@ export default async function HomePage() {
     <>
       <section className="hero wrap">
         <h1 className="hero__title">Word of Mouth</h1>
-        <p className="hero__tagline">
-          A travel journal built from tips — a bartender&rsquo;s aside, a friend&rsquo;s must-see
-          list — kept where the trail of who suggested what stays visible.
-        </p>
+        <HeroTagline />
       </section>
 
       <div className="wrap">

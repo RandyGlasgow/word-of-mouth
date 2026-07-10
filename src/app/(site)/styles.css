@@ -217,21 +217,56 @@ h4 {
 }
 
 .hero {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(1.5rem, 4vw, 3rem);
   padding-block: clamp(3rem, 9vw, 6rem) 2.5rem;
   border-bottom: 1px solid var(--rule);
 }
 
 .hero__title {
+  writing-mode: vertical-lr;
   font-size: clamp(3rem, 9vw, 6rem);
   letter-spacing: -0.02em;
-  max-width: 14ch;
+  line-height: 1;
+  flex: none;
+  opacity: 50%;
 }
 
 .hero__tagline {
-  margin-top: 1.25rem;
+  margin-top: 0;
   max-width: 42ch;
   font-size: clamp(1.1rem, 2.4vw, 1.4rem);
   color: var(--ink-soft);
+  position: sticky;
+  top: 2rem;
+  align-self: start;
+}
+
+/* Cross-fade swap slot: fragments are absolutely stacked over a visually-hidden
+   sizer that holds the longest fragment in normal flow to reserve height. */
+.hero__swap {
+  position: relative;
+  display: inline-block;
+  vertical-align: bottom;
+}
+
+.hero__swap-sizer {
+  visibility: hidden;
+}
+
+.hero__fragment {
+  position: absolute;
+  inset: 0;
+  color: var(--ink);
+  transition: opacity 0.45s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__fragment {
+    transition: none;
+  }
 }
 
 /* ---- Stats line --------------------------------------------------------- */
