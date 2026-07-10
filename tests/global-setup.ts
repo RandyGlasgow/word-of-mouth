@@ -31,7 +31,12 @@ const waitForServer = async (url: string, timeoutMs = 120_000): Promise<void> =>
 
 export const setup = async (): Promise<void> => {
   server = spawn('node', ['node_modules/next/dist/bin/next', 'dev', '-p', String(PORT)], {
-    env: { ...merged, PORT: String(PORT), NODE_OPTIONS: '--no-deprecation' },
+    env: {
+      ...merged,
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: String(PORT),
+      NODE_OPTIONS: '--no-deprecation',
+    },
     stdio: ['ignore', 'inherit', 'inherit'],
     detached: true,
   })
