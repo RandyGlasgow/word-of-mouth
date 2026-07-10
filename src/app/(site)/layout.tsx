@@ -1,18 +1,40 @@
+import { Albert_Sans, Fraunces } from 'next/font/google'
 import React from 'react'
+
+import { SiteFooter } from '@/components/SiteFooter'
+import { SiteHeader } from '@/components/SiteHeader'
+
 import './styles.css'
 
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  axes: ['opsz'],
+  display: 'swap',
+  variable: '--font-display',
+})
+
+const albertSans = Albert_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-body',
+})
+
 export const metadata = {
-  description: 'A blank template using Payload in a Next.js app.',
-  title: 'Payload Blank Template',
+  title: {
+    default: 'Word of Mouth',
+    template: '%s · Word of Mouth',
+  },
+  description:
+    'Travel write-ups, browsable by when and where they happened, crediting the people whose suggestions led the way.',
 }
 
-export default async function RootLayout(props: { children: React.ReactNode }) {
-  const { children } = props
-
+export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${fraunces.variable} ${albertSans.variable}`}>
       <body>
-        <main>{children}</main>
+        <SiteHeader />
+        <main className="site-main">{children}</main>
+        <SiteFooter />
       </body>
     </html>
   )
