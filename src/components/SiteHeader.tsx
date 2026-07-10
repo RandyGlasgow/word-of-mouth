@@ -8,7 +8,7 @@ export function SiteHeader() {
         <Link href="/" className="site-header__brand">
           Word of Mouth
         </Link>
-        <span className="site-header__tagline">Travel, by way of the people who pointed us there</span>
+        <span className="site-header__tagline">Travel, by way of suggestion</span>
       </div>
     </header>
   )
