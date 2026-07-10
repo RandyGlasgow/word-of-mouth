@@ -11,6 +11,7 @@ import { Media } from './collections/Media'
 import { Countries } from './collections/Countries'
 import { Cities } from './collections/Cities'
 import { People } from './collections/People'
+import { Tags } from './collections/Tags'
 import { Posts } from './collections/Posts'
 import { PostViews } from './collections/PostViews'
 
@@ -24,7 +25,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Countries, Cities, People, Posts, PostViews],
+  collections: [Users, Media, Countries, Cities, People, Tags, Posts, PostViews],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

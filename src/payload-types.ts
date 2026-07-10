@@ -72,6 +72,7 @@ export interface Config {
     countries: Country;
     cities: City;
     people: Person;
+    tags: Tag;
     posts: Post;
     'post-views': PostView;
     'payload-kv': PayloadKv;
@@ -86,6 +87,7 @@ export interface Config {
     countries: CountriesSelect<false> | CountriesSelect<true>;
     cities: CitiesSelect<false> | CitiesSelect<true>;
     people: PeopleSelect<false> | PeopleSelect<true>;
+    tags: TagsSelect<false> | TagsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'post-views': PostViewsSelect<false> | PostViewsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -317,10 +319,28 @@ export interface Post {
    * Who suggested this place (optional)
    */
   referredBy?: (number | null) | Person;
+  /**
+   * Cluster this recommendation (e.g. coffee, bars)
+   */
+  tags?: (number | Tag)[] | null;
   author: number | User;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: number;
+  name: string;
+  /**
+   * Leave blank to generate from name
+   */
+  slug?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -376,6 +396,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'people';
         value: number | Person;
+      } | null)
+    | ({
+        relationTo: 'tags';
+        value: number | Tag;
       } | null)
     | ({
         relationTo: 'posts';
@@ -520,6 +544,16 @@ export interface PeopleSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags_select".
+ */
+export interface TagsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts_select".
  */
 export interface PostsSelect<T extends boolean = true> {
@@ -540,6 +574,7 @@ export interface PostsSelect<T extends boolean = true> {
   publishedDate?: T;
   city?: T;
   referredBy?: T;
+  tags?: T;
   author?: T;
   updatedAt?: T;
   createdAt?: T;

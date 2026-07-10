@@ -84,6 +84,16 @@ export const Posts: CollectionConfig = {
       },
     },
     {
+      name: 'tags',
+      type: 'relationship',
+      relationTo: 'tags',
+      hasMany: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Cluster this recommendation (e.g. coffee, bars)',
+      },
+    },
+    {
       name: 'author',
       type: 'relationship',
       relationTo: 'users',

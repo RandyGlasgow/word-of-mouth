@@ -55,6 +55,7 @@ async function seed() {
   for (const person of existingPeople.docs) {
     await payload.update({ collection: 'people', id: person.id, data: { metVia: null }, ...ctx })
   }
+  await payload.delete({ collection: 'tags', where: { id: { exists: true } }, ...ctx })
   await payload.delete({ collection: 'posts', where: { id: { exists: true } }, ...ctx })
   await payload.delete({ collection: 'people', where: { id: { exists: true } }, ...ctx })
   await payload.delete({ collection: 'cities', where: { id: { exists: true } }, ...ctx })
@@ -184,6 +185,15 @@ async function seed() {
     ...ctx,
   })
 
+  // --- Tags ---
+  const tag = async (name: string) =>
+    (await payload.create({ collection: 'tags', data: { name }, ...ctx })).id
+  const coffee = await tag('coffee')
+  const bars = await tag('bars')
+  const food = await tag('food')
+  const views = await tag('views')
+  const markets = await tag('markets')
+
   // --- Posts ---
   type PostSeed = {
     title: string
@@ -195,6 +205,7 @@ async function seed() {
     paras: string[]
     status?: 'published' | 'draft'
     mapsUrl?: string
+    tags?: number[]
   }
 
   const posts: PostSeed[] = [
@@ -207,6 +218,7 @@ async function seed() {
       // Post-level spot: exercises the Maps-URL hook and the rail map at place zoom.
       mapsUrl:
         'https://www.google.com/maps/place/Tasca+do+Chico/@38.7101,-9.1444,17z/data=!3m1!4b1!4m6!3m5!1s0x0:0x0!8m2!3d38.7112696!4d-9.1315945',
+      tags: [bars],
       excerpt: 'A doorway, a curtain, and the best vinho verde I’ve had — on a bartender’s say-so.',
       paras: [
         'I would have walked straight past it. There is no sign, just a bead curtain and a slate with two wines chalked on it.',
@@ -220,6 +232,7 @@ async function seed() {
       author: author.id,
       referredBy: elena.id,
       date: '2025-06-03',
+      tags: [bars, food],
       excerpt: 'Elena walked me across the bridge at dawn to a cellar that doesn’t open to tourists.',
       paras: [
         'Porto wakes slowly. The fog sits on the Douro until the sun burns a hole in it around nine.',
@@ -232,6 +245,7 @@ async function seed() {
       author: admin.id,
       referredBy: yuki.id,
       date: '2025-09-21',
+      tags: [coffee, food],
       excerpt: 'Yuki’s roastery led to a dinner counter that seats eight and takes no reservations.',
       paras: [
         'Yuki roasts coffee by day and, it turns out, knows exactly where to eat by night.',
@@ -243,6 +257,7 @@ async function seed() {
       city: kyoto.id,
       author: author.id,
       date: '2025-11-08',
+      tags: [views],
       excerpt: 'The trick to the famous temples is simply being there an hour before anyone else.',
       paras: [
         'By seven the gravel is raked and empty. By nine it is a river of phones.',
@@ -255,6 +270,7 @@ async function seed() {
       author: admin.id,
       referredBy: carlos.id,
       date: '2026-01-17',
+      tags: [bars],
       excerpt: 'Carlos poured from the still into a gourd cup and explained why the smoke matters.',
       paras: [
         'The palenque is an hour of dirt road out of the city, past agave fields that look prehistoric.',
@@ -266,6 +282,7 @@ async function seed() {
       city: lisbon.id,
       author: author.id,
       date: '2026-02-25',
+      tags: [views],
       excerpt: 'Sometimes the recommendation is just: get on the 28 and see where the hills take you.',
       paras: [
         'I rode the whole line twice. The second time I knew where to jump off for the view and where to hang on for the turns.',
@@ -276,6 +293,7 @@ async function seed() {
       city: oaxaca.id,
       author: admin.id,
       date: '2026-03-30',
+      tags: [markets, food],
       excerpt: 'A market breakfast, a tlayuda the size of a steering wheel, and a plan for nothing.',
       paras: [
         'The market is loudest and best at eight. I ate standing up and let the day arrange itself around it.',
@@ -286,6 +304,7 @@ async function seed() {
       city: tokyo.id,
       author: author.id,
       date: '2026-05-14',
+      tags: [coffee, food],
       excerpt: 'Returning to a city you’ve been recommended into feels like having friends already.',
       paras: [
         'The second visit is different. You are not chasing sights; you are keeping appointments with places that were once tips.',
@@ -315,6 +334,7 @@ async function seed() {
         author: p.author,
         ...(p.referredBy ? { referredBy: p.referredBy } : {}),
         ...(p.mapsUrl ? { location: { mapsUrl: p.mapsUrl } } : {}),
+        ...(p.tags ? { tags: p.tags } : {}),
         _status: p.status ?? 'published',
       },
       ...ctx,
@@ -335,7 +355,7 @@ async function seed() {
 
   const publishedCount = posts.filter((p) => (p.status ?? 'published') === 'published').length
   console.log(
-    `Seed complete: 2 users, 3 countries, 5 cities, 4 people, ${publishedCount} published posts + 1 draft.`,
+    `Seed complete: 2 users, 3 countries, 5 cities, 4 people, 5 tags, ${publishedCount} published posts + 1 draft.`,
   )
   console.log('Admin login: admin@example.com / password')
 
