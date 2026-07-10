@@ -1,5 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
+import { isAdmin } from '../access'
+
 /**
  * One row per (post, visitor) — unique-visitor view tracking.
  * Hidden from the admin UI; written only by the views API route,
@@ -9,6 +11,15 @@ export const PostViews: CollectionConfig = {
   slug: 'post-views',
   admin: {
     hidden: true,
+  },
+  // Locked down: no public REST/GraphQL access. The views route handler
+  // writes via the Local API with overrideAccess, and counts are read via
+  // payload.count (also overrideAccess). Admins may read for inspection.
+  access: {
+    read: isAdmin,
+    create: () => false,
+    update: () => false,
+    delete: () => false,
   },
   indexes: [
     {
