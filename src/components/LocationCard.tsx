@@ -7,7 +7,7 @@ import { LocationMapLoader } from './LocationMapLoader'
 export type PostLocation = NonNullable<Post['location']>
 
 /** Zoom levels: tight on a specific place, wider when falling back to the city. */
-export const POST_ZOOM = 15
+export const POST_ZOOM = 19
 export const CITY_ZOOM = 11
 
 type WithCoords = PostLocation & { lat: number; lng: number }
