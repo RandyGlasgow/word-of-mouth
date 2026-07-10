@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wom
+      POSTGRES_PASSWORD: wom
+      POSTGRES_DB: word_of_mouth
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # creates the secondary database used by the integration test suite
+      - ./scripts/create-test-db.sql:/docker-entrypoint-initdb.d/create-test-db.sql
+
+volumes:
+  pgdata:

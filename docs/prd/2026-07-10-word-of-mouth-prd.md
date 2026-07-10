@@ -34,38 +34,38 @@ I travel, and the best things I find come from people — a bartender's tip, a f
 
 ### Authoring
 
-17. As an author, I want to log in to an admin panel, so that I can write and manage my posts.
-18. As an author, I want to create a post with title, rich text body, excerpt, cover image, gallery, and publish date, so that I can tell the full story.
-19. As an author, I want to pick the post's city from existing cities, so that the post lands in the right place in the hierarchy.
-20. As an author, I want to create a new city (and country) inline while writing, so that a first visit somewhere doesn't block publishing.
-21. As an author, I want to credit a person from the People collection as the referrer, so that suggestions are attributed.
-22. As an author, I want the referrer to be optional, so that self-discovered finds don't require a fake person.
-23. As an author, I want to create a new person inline (name, note like "bartender in Lisbon", optional photo), so that crediting someone new is frictionless.
-24. As an author, I want to record how I met a person (via another person, or via a post/trip), so that the referral chain is captured for the future graph.
-25. As an author, I want to save drafts and publish when ready, so that unfinished work stays private.
-26. As an author, I want the post's author to default to me, so that I don't have to set it manually.
-27. As an author, I want to edit or delete only my own posts, so that I can't accidentally damage a co-author's work.
-28. As an author, I want a profile (name, avatar, short bio), so that my byline and author page look complete.
+1. As an author, I want to log in to an admin panel, so that I can write and manage my posts.
+2. As an author, I want to create a post with title, rich text body, excerpt, cover image, gallery, and publish date, so that I can tell the full story.
+3. As an author, I want to pick the post's city from existing cities, so that the post lands in the right place in the hierarchy.
+4. As an author, I want to create a new city (and country) inline while writing, so that a first visit somewhere doesn't block publishing.
+5. As an author, I want to credit a person from the People collection as the referrer, so that suggestions are attributed.
+6. As an author, I want the referrer to be optional, so that self-discovered finds don't require a fake person.
+7. As an author, I want to create a new person inline (name, note like "bartender in Lisbon", optional photo), so that crediting someone new is frictionless.
+8. As an author, I want to record how I met a person (via another person, or via a post/trip), so that the referral chain is captured for the future graph.
+9. As an author, I want to save drafts and publish when ready, so that unfinished work stays private.
+10. As an author, I want the post's author to default to me, so that I don't have to set it manually.
+11. As an author, I want to edit or delete only my own posts, so that I can't accidentally damage a co-author's work.
+12. As an author, I want a profile (name, avatar, short bio), so that my byline and author page look complete.
 
 ### Administration
 
-29. As an admin, I want to manage all posts regardless of author, so that I can moderate and fix anything.
-30. As an admin, I want to invite/manage users and assign roles (admin, author), so that new co-authors can join.
-31. As an admin, I want exclusive edit/delete rights over Countries, Cities, and People, so that the shared taxonomy stays clean while authors can still add to it.
-32. As an admin, I want a published post to appear on the site (and its year/country/city pages to update) without a redeploy, so that publishing is self-serve.
+1. As an admin, I want to manage all posts regardless of author, so that I can moderate and fix anything.
+2. As an admin, I want to invite/manage users and assign roles (admin, author), so that new co-authors can join.
+3. As an admin, I want exclusive edit/delete rights over Countries, Cities, and People, so that the shared taxonomy stays clean while authors can still add to it.
+4. As an admin, I want a published post to appear on the site (and its year/country/city pages to update) without a redeploy, so that publishing is self-serve.
 
 ### View tracking
 
-33. As a site owner, I want each post's unique-visitor count tracked, so that I know what resonates.
-34. As a site owner, I want a visitor identified by an anonymous UUID cookie, so that counting needs no accounts or PII.
-35. As a site owner, I want a visitor to count at most once per post, so that refreshes don't inflate numbers.
-36. As a site owner, I want views stored in a separate table and counted by query, so that reads never write to the post record and cached pages stay cacheable.
-37. As a reader, I want view tracking to be invisible and non-blocking, so that it never slows the page.
+1. As a site owner, I want each post's unique-visitor count tracked, so that I know what resonates.
+2. As a site owner, I want a visitor identified by an anonymous UUID cookie, so that counting needs no accounts or PII.
+3. As a site owner, I want a visitor to count at most once per post, so that refreshes don't inflate numbers.
+4. As a site owner, I want views stored in a separate table and counted by query, so that reads never write to the post record and cached pages stay cacheable.
+5. As a reader, I want view tracking to be invisible and non-blocking, so that it never slows the page.
 
 ### Future-facing (data captured now, features later)
 
-38. As a site owner, I want referral edges (post → person, person → met-via) accumulating from day one, so that a referral graph visualization can be built later without backfilling.
-39. As a site owner, I want a reserved slot in the right rail, so that ads or widgets can be added later without redesign.
+1. As a site owner, I want referral edges (post → person, person → met-via) accumulating from day one, so that a referral graph visualization can be built later without backfilling.
+2. As a site owner, I want a reserved slot in the right rail, so that ads or widgets can be added later without redesign.
 
 ## Implementation Decisions
 
@@ -91,7 +91,7 @@ I travel, and the best things I find come from people — a bartender's tip, a f
 - **Seeding through Payload's Local API**, not raw SQL, so tests exercise the same validation and hooks as production writes.
 - **Access control** tested through the same Local API with different user contexts: author A cannot update author B's post; authors cannot delete a Country; unpublished posts are absent from public routes.
 - **Views idempotency** tested at the HTTP seam: two POSTs with the same visitor cookie yield one row; distinct cookies yield distinct rows; the endpoint never blocks or breaks page rendering.
-- **Prior art:** none — greenfield repo. This suite establishes the pattern; future features should test at this same seam rather than adding new ones.
+- **Prior art:** none — greenfield repo. This suite establishes the pattern; future features should test at this same seam rather than adding new ones.pa
 
 ## Out of Scope
 
@@ -106,5 +106,6 @@ I travel, and the best things I find come from people — a bartender's tip, a f
 
 - The year segment is derived from **publish date**, not creation date — backdating a post moves it in the hierarchy, which is the intended behavior for writing up past trips.
 - Two posts may share a slug if they live under different city/year paths; slug uniqueness is only required within a (year, country, city) scope. Simplest safe implementation is global slug uniqueness — acceptable for v1 if scoped uniqueness is fiddly.
-- Font licensing: Fraunces and Albert Sans are open (Google Fonts / OFL). Cabinet Grotesk is free via Fontshare with its own license — verify before shipping; Albert Sans is the safe default.
+- Font licensing: pa and Albert Sans are open (Google Fonts / OFL). Cabinet Grotesk is free via Fontshare with its own license — verify before shipping; Albert Sans is the safe default.
 - The design conversation for this PRD is recorded in the brainstorming session of 2026-07-10; palette and type choices are directional and may be tuned during implementation without a PRD change.
+
