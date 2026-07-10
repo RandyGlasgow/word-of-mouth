@@ -1,9 +1,21 @@
 import type { CollectionConfig } from 'payload'
 
 import { slugField } from '../fields/slug'
+import { isAdminOrAuthor, isAuthenticated, publishedOrOwn } from '../access'
+import { revalidatePost, revalidatePostDelete } from '../hooks/revalidate'
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
+  access: {
+    read: publishedOrOwn,
+    create: isAuthenticated,
+    update: isAdminOrAuthor,
+    delete: isAdminOrAuthor,
+  },
+  hooks: {
+    afterChange: [revalidatePost],
+    afterDelete: [revalidatePostDelete],
+  },
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'city', 'author', 'publishedDate', '_status'],

@@ -1,9 +1,20 @@
 import type { CollectionConfig } from 'payload'
 
 import { slugField } from '../fields/slug'
+import { isAdmin, isAuthenticated } from '../access'
+import { revalidateCity } from '../hooks/revalidate'
 
 export const Cities: CollectionConfig = {
   slug: 'cities',
+  access: {
+    read: () => true,
+    create: isAuthenticated,
+    update: isAdmin,
+    delete: isAdmin,
+  },
+  hooks: {
+    afterChange: [revalidateCity],
+  },
   admin: {
     useAsTitle: 'name',
   },

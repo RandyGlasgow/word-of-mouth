@@ -44,3 +44,44 @@ export const seedUser = async (payload: Payload, { email, name, role = 'author' 
   })
   return { user, token }
 }
+
+/** Minimal valid Lexical richText value for seeding a post `body`. */
+export const lexicalBody = (text = 'Body text.') => ({
+  root: {
+    type: 'root',
+    children: [
+      {
+        type: 'paragraph',
+        version: 1,
+        children: [{ type: 'text', version: 1, text, detail: 0, format: 0, mode: 'normal', style: '' }],
+        direction: 'ltr' as const,
+        format: '' as const,
+        indent: 0,
+      },
+    ],
+    direction: 'ltr' as const,
+    format: '' as const,
+    indent: 0,
+    version: 1,
+  },
+})
+
+/** Seed a country + a city inside it, returning both. Bypasses access control. */
+export const seedPlace = async (
+  payload: Payload,
+  { country = 'Portugal', city = 'Lisbon' }: { country?: string; city?: string } = {},
+) => {
+  const countryDoc = await payload.create({
+    collection: 'countries',
+    data: { name: country },
+    overrideAccess: true,
+    context: { skipRevalidate: true },
+  })
+  const cityDoc = await payload.create({
+    collection: 'cities',
+    data: { name: city, country: countryDoc.id },
+    overrideAccess: true,
+    context: { skipRevalidate: true },
+  })
+  return { country: countryDoc, city: cityDoc }
+}
