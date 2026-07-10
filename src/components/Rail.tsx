@@ -5,6 +5,7 @@ import { authorHref, postHref, type PopulatedPost } from '@/lib/queries'
 import { ViewCount } from '@/views'
 
 import { formatDate } from './format'
+import { LocationCard, resolvePostLocation } from './LocationCard'
 import { mediaInfo } from './media'
 
 /** The post page's right-hand aside: author, who suggested the place, a view
@@ -18,6 +19,7 @@ export function Rail({
   moreFromCity: PopulatedPost[]
 }) {
   const avatar = mediaInfo(post.author.avatar)
+  const location = resolvePostLocation(post)
 
   return (
     <aside className="rail">
@@ -42,6 +44,8 @@ export function Rail({
           {post.referredBy.note && <p className="rail__note">{post.referredBy.note}</p>}
         </section>
       )}
+
+      {location && <LocationCard location={location.location} zoom={location.zoom} />}
 
       <section className="rail__card">
         <p className="rail__label">Views</p>

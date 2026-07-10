@@ -593,6 +593,53 @@ a.tag:hover {
   color: var(--ink-faint);
 }
 
+/* Location card — Leaflet mini-map over the place name and a Google Maps link.
+   Rounded, hairline-bordered container matching the rail's card treatment. */
+.rail__map {
+  height: 180px;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  background: var(--paper-tint);
+  margin-bottom: 0.75rem;
+}
+
+/* Placeholder shown while the client-only map chunk loads. */
+.rail__map--loading {
+  background: var(--paper-tint);
+}
+
+.rail__place {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--ink);
+  margin-bottom: 0.35rem;
+}
+
+.rail__maplink {
+  display: inline-block;
+  font-size: 0.85rem;
+  color: var(--pink-deep);
+  text-decoration: none;
+}
+
+.rail__maplink:hover {
+  text-decoration: underline;
+}
+
+/* Custom map marker (Leaflet divIcon) — a dusty-pink dot that avoids Leaflet's
+   default PNG marker, whose paths break under the bundler. */
+.location-pin__dot {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--pink-deep);
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--rule-strong);
+}
+
 /* Reserved for a future ad/widget unit — intentionally empty, keeps its
    footprint in the layout so adding one later needs no redesign. */
 .rail__ad {
