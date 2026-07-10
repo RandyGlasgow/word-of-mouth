@@ -209,6 +209,27 @@ export interface City {
   country: number | Country;
   intro?: string | null;
   cover?: (number | null) | Media;
+  /**
+   * Paste a Google Maps link and the coordinates fill in on save.
+   */
+  location?: {
+    /**
+     * Paste a Google Maps link — a full browser URL or a maps.app.goo.gl share link. Coordinates and place name fill in when you save.
+     */
+    mapsUrl?: string | null;
+    /**
+     * Prefilled from the link when possible; edit freely.
+     */
+    placeName?: string | null;
+    /**
+     * Auto-filled from the link; hand-editable.
+     */
+    lat?: number | null;
+    /**
+     * Auto-filled from the link; hand-editable.
+     */
+    lng?: number | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -269,6 +290,27 @@ export interface Post {
   };
   cover?: (number | null) | Media;
   gallery?: (number | Media)[] | null;
+  /**
+   * Paste a Google Maps link and the coordinates fill in on save.
+   */
+  location?: {
+    /**
+     * Paste a Google Maps link — a full browser URL or a maps.app.goo.gl share link. Coordinates and place name fill in when you save.
+     */
+    mapsUrl?: string | null;
+    /**
+     * Prefilled from the link when possible; edit freely.
+     */
+    placeName?: string | null;
+    /**
+     * Auto-filled from the link; hand-editable.
+     */
+    lat?: number | null;
+    /**
+     * Auto-filled from the link; hand-editable.
+     */
+    lng?: number | null;
+  };
   publishedDate: string;
   city: number | City;
   /**
@@ -452,6 +494,14 @@ export interface CitiesSelect<T extends boolean = true> {
   country?: T;
   intro?: T;
   cover?: T;
+  location?:
+    | T
+    | {
+        mapsUrl?: T;
+        placeName?: T;
+        lat?: T;
+        lng?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -479,6 +529,14 @@ export interface PostsSelect<T extends boolean = true> {
   body?: T;
   cover?: T;
   gallery?: T;
+  location?:
+    | T
+    | {
+        mapsUrl?: T;
+        placeName?: T;
+        lat?: T;
+        lng?: T;
+      };
   publishedDate?: T;
   city?: T;
   referredBy?: T;

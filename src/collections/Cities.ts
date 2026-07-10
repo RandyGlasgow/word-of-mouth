@@ -1,7 +1,9 @@
 import type { CollectionConfig } from 'payload'
 
 import { slugField } from '../fields/slug'
+import { locationField } from '../fields/location'
 import { isAdmin, isAuthenticated } from '../access'
+import { resolveLocation } from '../hooks/location'
 import { revalidateCity } from '../hooks/revalidate'
 
 export const Cities: CollectionConfig = {
@@ -13,6 +15,7 @@ export const Cities: CollectionConfig = {
     delete: isAdmin,
   },
   hooks: {
+    beforeChange: [resolveLocation],
     afterChange: [revalidateCity],
   },
   admin: {
@@ -40,5 +43,6 @@ export const Cities: CollectionConfig = {
       type: 'upload',
       relationTo: 'media',
     },
+    locationField(),
   ],
 }

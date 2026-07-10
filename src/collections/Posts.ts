@@ -1,7 +1,9 @@
 import type { CollectionConfig } from 'payload'
 
 import { slugField } from '../fields/slug'
+import { locationField } from '../fields/location'
 import { isAdminOrAuthor, isAuthenticated, publishedOrOwn } from '../access'
+import { resolveLocation } from '../hooks/location'
 import { revalidatePost, revalidatePostDelete } from '../hooks/revalidate'
 
 export const Posts: CollectionConfig = {
@@ -13,6 +15,7 @@ export const Posts: CollectionConfig = {
     delete: isAdminOrAuthor,
   },
   hooks: {
+    beforeChange: [resolveLocation],
     afterChange: [revalidatePost],
     afterDelete: [revalidatePostDelete],
   },
@@ -50,6 +53,7 @@ export const Posts: CollectionConfig = {
       relationTo: 'media',
       hasMany: true,
     },
+    locationField(),
     {
       // The year segment of the post URL derives from this date.
       name: 'publishedDate',
