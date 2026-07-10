@@ -410,6 +410,8 @@ a.tag:hover {
 .cover {
   margin: 1.5rem 0 2.5rem;
   border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .cover img {
@@ -521,6 +523,7 @@ a.tag:hover {
 .gallery__tile {
   overflow: hidden;
   border: 1px solid var(--rule);
+  border-radius: 4px;
   cursor: pointer;
   transition:
     transform 0.2s ease,
