@@ -32,7 +32,15 @@ A shared `location` group field added to **Posts** and **Cities**:
 | ----------- | ------- | ------------------------------------------------------------ |
 | `mapsUrl`   | text    | Pasted Google Maps URL (full or `maps.app.goo.gl` short link) |
 | `placeName` | text    | e.g. "Café Central"; prefilled from the URL when parseable    |
-| `point`     | point   | `[lng, lat]`; auto-populated by the hook, hand-editable       |
+| `lat`       | number  | Auto-populated by the hook, hand-editable                     |
+| `lng`       | number  | Auto-populated by the hook, hand-editable                     |
+
+> **Amended during implementation:** the original design used Payload's
+> native `point` field, but on the Postgres adapter that type unconditionally
+> requires the PostGIS extension, which `postgres:17-alpine` (this project's
+> Docker image) does not ship. Since the feature does no spatial queries —
+> the coordinates are only read back to place a marker and build a link —
+> two plain number fields were chosen over adding a PostGIS image dependency.
 
 All fields optional. The group is defined once in `src/fields/` (following the
 `slugField` pattern) and reused by both collections.
@@ -51,7 +59,7 @@ A `beforeChange` hook on the group's parent collections:
   resolved URL.
 - Prefills `placeName` from the `/maps/place/<name>/` path segment
   (URL-decoded, `+` → space) only when `placeName` is empty.
-- Only runs when `mapsUrl` changed; never overwrites a hand-edited `point`
+- Only runs when `mapsUrl` changed; never overwrites hand-edited `lat`/`lng`
   unless the URL changed.
 - An unparseable URL throws a validation error with a helpful message
   ("Couldn't find coordinates in this link — paste the full URL from your
@@ -63,8 +71,8 @@ without Payload.
 ## Fallback logic
 
 The post page resolves `post.location ?? post.city.location` (a location
-counts as present when it has a `point`) and passes it to the Rail. If
-neither has a point, the card does not render.
+counts as present when it has `lat` and `lng`) and passes it to the Rail. If
+neither has coordinates, the card does not render.
 
 ## Rendering
 
@@ -72,7 +80,7 @@ New Rail section `LocationCard`:
 
 - **Map:** Leaflet (~42KB gzip) in a client component, loaded via
   `next/dynamic` with `ssr: false` (Leaflet touches `window`). ~180px tall,
-  single marker at `point`, zoom ~15 for post locations / ~11 for city
+  single marker at `lat`/`lng`, zoom ~15 for post locations / ~11 for city
   fallback, scroll-wheel zoom disabled (it's in a sidebar), pan/zoom via
   controls.
 - **Tiles:** OpenStreetMap standard raster tiles with proper attribution.
@@ -90,7 +98,7 @@ New Rail section `LocationCard`:
 ## Error handling
 
 - Bad pasted URL → admin validation error (see hook above).
-- Location group with URL but no point (e.g. legacy data) → card renders
+- Location group with URL but no coordinates (e.g. legacy data) → card renders
   link-only, no map.
 - Tile server unreachable → Leaflet shows a blank/gray map; the Google Maps
   link still works. No custom handling.
@@ -100,7 +108,7 @@ New Rail section `LocationCard`:
 - **Unit:** the URL parser, one case per supported URL shape plus rejection
   cases (non-Google URL, URL with no coordinates).
 - **Integration (Local API, existing patterns):** creating/updating a post or
-  city with a `mapsUrl` populates `point` and `placeName`; hand-edited point
+  city with a `mapsUrl` populates `lat`/`lng` and `placeName`; hand-edited coordinates
   survives an unrelated update; invalid URL rejects with validation error.
 - **Visual:** run the app via the project `verify` skill, open a seeded post
   in the browser, and confirm the map renders with a marker and the Google
