@@ -53,12 +53,16 @@ export default async function PostPage({
   if (!post) notFound()
 
   const moreFromCity = await getMoreFromCity(post.city.id, post.id)
-  const photos: GalleryPhoto[] = [post.cover, ...(post.gallery ?? [])]
+  const withDimensions = (
+    m: ReturnType<typeof mediaInfo>,
+  ): m is { url: string; alt: string; width: number; height: number } =>
+    m !== null && m.width !== undefined && m.height !== undefined
+
+  const coverInfo = mediaInfo(post.cover)
+  const cover: GalleryPhoto | null = withDimensions(coverInfo) ? coverInfo : null
+  const photos: GalleryPhoto[] = (post.gallery ?? [])
     .map((m) => mediaInfo(m as number | Media | null | undefined))
-    .filter(
-      (m): m is { url: string; alt: string; width: number; height: number } =>
-        m !== null && m.width !== undefined && m.height !== undefined,
-    )
+    .filter(withDimensions)
 
   return (
     <div className="wrap">
@@ -86,7 +90,7 @@ export default async function PostPage({
           </p>
           <p className="article__date">{formatDate(post.publishedDate)}</p>
 
-          <PostGallery photos={photos}>
+          <PostGallery cover={cover} photos={photos}>
             <div className="article__body">
               <RichText data={post.body} />
             </div>
