@@ -10,7 +10,9 @@ import dotenv from 'dotenv'
 const env: Record<string, string> = {}
 dotenv.config({ path: './test.env', processEnv: env })
 
-const PORT = 3210
+// Shell env wins over test.env so parallel workers can target their own DB/port.
+const merged = { ...env, ...process.env } as Record<string, string>
+const PORT = Number(new URL(merged.TEST_SERVER_URL || 'http://127.0.0.1:3210').port || 3210)
 let server: ChildProcess | undefined
 
 const waitForServer = async (url: string, timeoutMs = 120_000): Promise<void> => {
@@ -29,7 +31,7 @@ const waitForServer = async (url: string, timeoutMs = 120_000): Promise<void> =>
 
 export const setup = async (): Promise<void> => {
   server = spawn('node', ['node_modules/next/dist/bin/next', 'dev', '-p', String(PORT)], {
-    env: { ...process.env, ...env, PORT: String(PORT), NODE_OPTIONS: '--no-deprecation' },
+    env: { ...merged, PORT: String(PORT), NODE_OPTIONS: '--no-deprecation' },
     stdio: ['ignore', 'inherit', 'inherit'],
     detached: true,
   })
