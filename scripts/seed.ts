@@ -138,6 +138,8 @@ async function seed() {
       name: 'Tokyo',
       country: japan.id,
       intro: 'A city of thresholds — each alley a different rulebook, each counter a small world.',
+      // City-level location: posts in Tokyo without their own spot fall back to this.
+      location: { mapsUrl: 'https://www.google.com/maps/place/Tokyo/@35.6764,139.6500,11z' },
     },
     ...ctx,
   })
@@ -192,6 +194,7 @@ async function seed() {
     excerpt: string
     paras: string[]
     status?: 'published' | 'draft'
+    mapsUrl?: string
   }
 
   const posts: PostSeed[] = [
@@ -201,6 +204,9 @@ async function seed() {
       author: admin.id,
       referredBy: tomas.id,
       date: '2025-04-12',
+      // Post-level spot: exercises the Maps-URL hook and the rail map at place zoom.
+      mapsUrl:
+        'https://www.google.com/maps/place/Tasca+do+Chico/@38.7101,-9.1444,17z/data=!3m1!4b1!4m6!3m5!1s0x0:0x0!8m2!3d38.7112696!4d-9.1315945',
       excerpt: 'A doorway, a curtain, and the best vinho verde I’ve had — on a bartender’s say-so.',
       paras: [
         'I would have walked straight past it. There is no sign, just a bead curtain and a slate with two wines chalked on it.',
@@ -308,6 +314,7 @@ async function seed() {
         city: p.city,
         author: p.author,
         ...(p.referredBy ? { referredBy: p.referredBy } : {}),
+        ...(p.mapsUrl ? { location: { mapsUrl: p.mapsUrl } } : {}),
         _status: p.status ?? 'published',
       },
       ...ctx,
