@@ -228,7 +228,7 @@ h4 {
 .hero__title {
   writing-mode: vertical-lr;
   font-size: clamp(3rem, 9vw, 6rem);
-  letter-spacing: -0.02em;
+  letter-spacing: 0.05em;
   line-height: 1;
   flex: none;
   opacity: 50%;
@@ -236,7 +236,7 @@ h4 {
 
 .hero__tagline {
   margin-top: 0;
-  max-width: 42ch;
+  max-width: 76ch;
   font-size: clamp(1.1rem, 2.4vw, 1.4rem);
   color: var(--ink-soft);
   position: sticky;
@@ -244,26 +244,36 @@ h4 {
   align-self: start;
 }
 
-/* Cross-fade swap slot: fragments are absolutely stacked over a visually-hidden
-   sizer that holds the longest fragment in normal flow to reserve height. */
+/* Cross-fade swap slot. Fragments stack in a single inline-grid cell — kept in
+   normal flow (not absolutely positioned) so they share the surrounding text's
+   baseline and sit inline with the em dash. The slot's width is set (in JS) to
+   the active fragment's measured width and animates between them, so the
+   following clause hugs the active fragment with no dead gap and reflows
+   smoothly instead of jumping. */
 .hero__swap {
-  position: relative;
-  display: inline-block;
-  vertical-align: bottom;
-}
-
-.hero__swap-sizer {
-  visibility: hidden;
+  display: inline-grid;
+  justify-items: start;
+  vertical-align: baseline;
+  overflow: hidden;
+  /* content-box + a sliver of right padding so the italic overhang on the last
+     glyph isn't clipped; the JS-set width sizes the content box to the measured
+     fragment advance width, and the padding is added room on top. */
+  box-sizing: content-box;
+  padding-right: 0.3em;
+  transition: width 0.45s ease;
 }
 
 .hero__fragment {
-  position: absolute;
-  inset: 0;
+  grid-area: 1 / 1;
+  white-space: nowrap;
   color: var(--ink);
+  font-style: italic;
+  font-weight: 600;
   transition: opacity 0.45s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero__swap,
   .hero__fragment {
     transition: none;
   }

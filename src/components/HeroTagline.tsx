@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { activeFragment, scrollProgress } from '@/lib/heroTagline'
 
@@ -10,18 +10,19 @@ const FRAGMENTS = [
   "a stranger's scribbled napkin map",
 ] as const
 
-// The longest fragment sizes the swap slot so nothing reflows as fragments change.
-const LONGEST_FRAGMENT = "a stranger's scribbled napkin map"
-
 /** Homepage hero tagline. Server-renders the original single sentence (the
  *  no-JS / crawler / reduced-motion view). After mount, if the user has not
- *  requested reduced motion, it enhances to a three-line layout whose middle
- *  "swap slot" cross-fades through the three source fragments as the reader
+ *  requested reduced motion, it enhances to an inline "swap slot" whose source
+ *  fragment cross-fades — and whose width animates to hug the active fragment,
+ *  so the following clause reflows smoothly with no dead gap — as the reader
  *  scrolls through the `.hero`. */
 export function HeroTagline() {
   const rootRef = useRef<HTMLParagraphElement>(null)
+  const fragmentRefs = useRef<(HTMLSpanElement | null)[]>([])
   const [enhanced, setEnhanced] = useState(false)
   const [active, setActive] = useState(0)
+  // Measured width (px) of each fragment; drives the animated slot width.
+  const [widths, setWidths] = useState<number[]>([])
 
   // Gate enhancement behind an effect so the initial client render matches the
   // server render (no hydration mismatch). Reduced-motion users keep the static
@@ -33,6 +34,34 @@ export function HeroTagline() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setEnhanced(true)
   }, [])
+
+  // Measure each fragment's rendered width. Runs before paint (layout effect) so
+  // the first enhanced frame already has correct widths, and re-runs when fonts
+  // finish loading or the viewport resizes (font-size is viewport-clamped).
+  useLayoutEffect(() => {
+    if (!enhanced) return
+
+    const measure = () => {
+      const next = fragmentRefs.current.map((el) => el?.offsetWidth ?? 0)
+      setWidths((prev) =>
+        prev.length === next.length && prev.every((w, i) => w === next[i]) ? prev : next,
+      )
+    }
+
+    measure()
+
+    let cancelled = false
+    // Fonts can land after first paint; re-measure once they're ready.
+    document.fonts?.ready.then(() => {
+      if (!cancelled) measure()
+    })
+    window.addEventListener('resize', measure, { passive: true })
+
+    return () => {
+      cancelled = true
+      window.removeEventListener('resize', measure)
+    }
+  }, [enhanced])
 
   useEffect(() => {
     if (!enhanced) return
@@ -71,22 +100,23 @@ export function HeroTagline() {
     return (
       <p className="hero__tagline" ref={rootRef}>
         Every trip leaves a paper trail of tips — a bartender&apos;s aside, a friend&apos;s
-        must-see list, a stranger&apos;s scribbled napkin map. This is a journal that keeps that trail
-        visible: not just where to go, but who sent you there.
+        must-see list, a stranger&apos;s scribbled napkin map.
       </p>
     )
   }
 
+  const slotWidth = widths[active]
+
   return (
     <p className="hero__tagline" ref={rootRef}>
       Every trip leaves a paper trail of tips —{' '}
-      <span className="hero__swap">
-        <span className="hero__swap-sizer" aria-hidden="true">
-          {LONGEST_FRAGMENT}
-        </span>
+      <span className="hero__swap" style={slotWidth ? { width: `${slotWidth}px` } : undefined}>
         {FRAGMENTS.map((fragment, i) => (
           <span
             key={fragment}
+            ref={(el) => {
+              fragmentRefs.current[i] = el
+            }}
             className="hero__fragment"
             style={{ opacity: i === active ? 1 : 0 }}
             aria-hidden={i === active ? undefined : true}
@@ -95,8 +125,6 @@ export function HeroTagline() {
           </span>
         ))}
       </span>
-      . This is a journal that keeps that trail visible: not just where to go, but who sent you
-      there.
     </p>
   )
 }
