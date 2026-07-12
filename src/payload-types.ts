@@ -70,7 +70,9 @@ export interface Config {
     users: User;
     media: Media;
     countries: Country;
+    regions: Region;
     cities: City;
+    places: Place;
     people: Person;
     tags: Tag;
     posts: Post;
@@ -85,7 +87,9 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     countries: CountriesSelect<false> | CountriesSelect<true>;
+    regions: RegionsSelect<false> | RegionsSelect<true>;
     cities: CitiesSelect<false> | CitiesSelect<true>;
+    places: PlacesSelect<false> | PlacesSelect<true>;
     people: PeopleSelect<false> | PeopleSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
@@ -199,6 +203,22 @@ export interface Country {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "regions".
+ */
+export interface Region {
+  id: number;
+  name: string;
+  code?: string | null;
+  /**
+   * Leave blank to generate from name
+   */
+  slug?: string | null;
+  country: number | Country;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "cities".
  */
 export interface City {
@@ -209,6 +229,7 @@ export interface City {
    */
   slug?: string | null;
   country: number | Country;
+  region?: (number | null) | Region;
   intro?: string | null;
   cover?: (number | null) | Media;
   /**
@@ -232,6 +253,43 @@ export interface City {
      */
     lng?: number | null;
   };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "places".
+ */
+export interface Place {
+  id: number;
+  name: string;
+  /**
+   * Leave blank to generate from name
+   */
+  slug?: string | null;
+  /**
+   * Paste a Google Maps link and the coordinates fill in on save.
+   */
+  location?: {
+    /**
+     * Paste a Google Maps link — a full browser URL or a maps.app.goo.gl share link. Coordinates and place name fill in when you save.
+     */
+    mapsUrl?: string | null;
+    /**
+     * Prefilled from the link when possible; edit freely.
+     */
+    placeName?: string | null;
+    /**
+     * Auto-filled from the link; hand-editable.
+     */
+    lat?: number | null;
+    /**
+     * Auto-filled from the link; hand-editable.
+     */
+    lng?: number | null;
+  };
+  city?: (number | null) | City;
+  note?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -390,8 +448,16 @@ export interface PayloadLockedDocument {
         value: number | Country;
       } | null)
     | ({
+        relationTo: 'regions';
+        value: number | Region;
+      } | null)
+    | ({
         relationTo: 'cities';
         value: number | City;
+      } | null)
+    | ({
+        relationTo: 'places';
+        value: number | Place;
       } | null)
     | ({
         relationTo: 'people';
@@ -510,12 +576,25 @@ export interface CountriesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "regions_select".
+ */
+export interface RegionsSelect<T extends boolean = true> {
+  name?: T;
+  code?: T;
+  slug?: T;
+  country?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "cities_select".
  */
 export interface CitiesSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
   country?: T;
+  region?: T;
   intro?: T;
   cover?: T;
   location?:
@@ -526,6 +605,26 @@ export interface CitiesSelect<T extends boolean = true> {
         lat?: T;
         lng?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "places_select".
+ */
+export interface PlacesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  location?:
+    | T
+    | {
+        mapsUrl?: T;
+        placeName?: T;
+        lat?: T;
+        lng?: T;
+      };
+  city?: T;
+  note?: T;
   updatedAt?: T;
   createdAt?: T;
 }
