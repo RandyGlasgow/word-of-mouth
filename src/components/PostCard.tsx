@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import React from 'react'
 
+import { cityLabel } from '@/lib/cityLabel'
 import { authorHref, postHref, type PopulatedPost } from '@/lib/queries'
 
 import { formatDate } from './format'
@@ -26,7 +27,7 @@ export function PostCard({
       <div className="post-card__meta">
         <span>{formatDate(post.publishedDate)}</span>
         {showCity && (
-          <span className="dot tag">{post.place.city.name}</span>
+          <span className="dot tag">{cityLabel(post.place.city)}</span>
         )}
         <span className="dot">
           by <Link href={authorHref(post.author)}>{post.author.name}</Link>

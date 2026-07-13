@@ -2,6 +2,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 
+import { cityLabel } from '@/lib/cityLabel'
+import { encounterCaption } from '@/lib/encounter'
 import { authorHref, postHref, type PopulatedPost } from '@/lib/queries'
 import { ViewCount } from '@/views'
 
@@ -21,6 +23,7 @@ export function Rail({
 }) {
   const avatar = mediaInfo(post.author.avatar)
   const location = resolvePostLocation(post)
+  const encounter = post.referredBy ? encounterCaption(post.referredBy) : null
 
   return (
     <aside className="rail">
@@ -42,6 +45,8 @@ export function Rail({
           <p className="rail__label">Suggested by</p>
           <span className="rail__name">{post.referredBy.name}</span>
           {post.referredBy.note && <p className="rail__note">{post.referredBy.note}</p>}
+          {encounter?.met && <p className="rail__meta">{encounter.met}</p>}
+          {encounter?.intro && <p className="rail__meta">{encounter.intro}</p>}
         </section>
       )}
 
@@ -56,7 +61,7 @@ export function Rail({
 
       {moreFromCity.length > 0 && (
         <section className="rail__card">
-          <p className="rail__label">More from {post.place.city.name}</p>
+          <p className="rail__label">More from {cityLabel(post.place.city)}</p>
           <ul className="rail__links">
             {moreFromCity.map((p) => (
               <li key={p.id}>

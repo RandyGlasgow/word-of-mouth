@@ -19,7 +19,7 @@ export const getTestPayload = async (): Promise<Payload> => {
 /** Wipe all content collections. Call in beforeAll/beforeEach for isolation. */
 export const resetDb = async (payload: Payload): Promise<void> => {
   // Order matters: children before the collections they reference.
-  for (const slug of ['post-views', 'posts', 'people', 'places', 'cities', 'countries', 'media', 'users'] as const) {
+  for (const slug of ['post-views', 'posts', 'people', 'places', 'cities', 'regions', 'countries', 'media', 'users'] as const) {
     await payload.delete({ collection: slug, where: {}, overrideAccess: true })
   }
 }

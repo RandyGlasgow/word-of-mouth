@@ -2,10 +2,10 @@
  * Development seed for Word of Mouth.
  *
  * Wipes the content collections and rebuilds a small but realistic travel
- * journal: one admin + one author, three countries, five cities, four people
- * (with a "met via" chain), eight published posts across 2025/2026, and one
- * draft. All writes go through Payload's Local API so validation and hooks run
- * exactly as they would in production.
+ * journal: one admin + one author, four countries, one region (California),
+ * six cities, five people (with a "met via" chain), nine published posts across
+ * 2025/2026, and one draft. All writes go through Payload's Local API so
+ * validation and hooks run exactly as they would in production.
  *
  * Run:
  *   DATABASE_URL=postgres://wom:wom@127.0.0.1:5432/word_of_mouth \
@@ -56,6 +56,7 @@ async function seed() {
   await payload.delete({ collection: 'people', where: { id: { exists: true } }, ...ctx })
   await payload.delete({ collection: 'places', where: { id: { exists: true } }, ...ctx })
   await payload.delete({ collection: 'cities', where: { id: { exists: true } }, ...ctx })
+  await payload.delete({ collection: 'regions', where: { id: { exists: true } }, ...ctx })
   await payload.delete({ collection: 'countries', where: { id: { exists: true } }, ...ctx })
   await payload.delete({ collection: 'users', where: { id: { exists: true } }, ...ctx })
 
@@ -110,6 +111,23 @@ async function seed() {
     },
     ...ctx,
   })
+  const usa = await payload.create({
+    collection: 'countries',
+    data: {
+      name: 'USA',
+      intro: 'A continent of regions — where the state you are in changes the whole conversation.',
+    },
+    ...ctx,
+  })
+
+  // --- Regions (optional level between Country and City). Only some countries
+  // use one: California gives "Sacramento, CA"; Portugal/Japan/Mexico cities
+  // stay region-less ("Tokyo"), so both label forms exist in seed data. ---
+  const california = await payload.create({
+    collection: 'regions',
+    data: { name: 'California', code: 'CA', country: usa.id },
+    ...ctx,
+  })
 
   // --- Cities ---
   const lisbon = await payload.create({
@@ -156,6 +174,17 @@ async function seed() {
       name: 'Oaxaca',
       country: mexico.id,
       intro: 'Mezcal, mole, and mornings that smell like cut herbs and wood smoke.',
+    },
+    ...ctx,
+  })
+  // The one city with a region: renders "Sacramento, CA" via city.region.
+  const sacramento = await payload.create({
+    collection: 'cities',
+    data: {
+      name: 'Sacramento',
+      country: usa.id,
+      region: california.id,
+      intro: 'Delta breezes, farm-to-fork tables, and a downtown that hides its best bars in plain sight.',
     },
     ...ctx,
   })
@@ -208,6 +237,16 @@ async function seed() {
   const carlos = await payload.create({
     collection: 'people',
     data: { name: 'Carlos', note: 'Mezcal maker outside Oaxaca. Met at his palenque.' },
+    ...ctx,
+  })
+  const sam = await payload.create({
+    collection: 'people',
+    data: {
+      name: 'Sam',
+      note: 'Bartender in downtown Sacramento who keeps a list of where to go next.',
+      metThrough: elena.id,
+      metOn: '2026-04-02T00:00:00.000Z',
+    },
     ...ctx,
   })
 
@@ -326,6 +365,19 @@ async function seed() {
       ],
     },
     {
+      title: 'The Sacramento bar behind the alley door',
+      city: sacramento.id,
+      author: admin.id,
+      referredBy: sam.id,
+      date: '2026-04-08',
+      tags: [bars],
+      excerpt: 'Sam sent me down an alley off K Street to a room that runs on regulars and rye.',
+      paras: [
+        'You would never find it from the street. Sam drew me a map on a coaster: the alley, the unmarked door, the nod you give the person behind it.',
+        'Inside, it is all dark wood and Delta breezes through a propped door. The rye list is longer than the food menu, and that is the point.',
+      ],
+    },
+    {
       title: 'Tokyo, the second time',
       city: tokyo.id,
       author: author.id,
@@ -389,9 +441,22 @@ async function seed() {
     })
   }
 
+  // Sam tends (and recommended) the Sacramento bar, so that Place is also where
+  // we met him. Its city carries a region, so the encounter caption reads
+  // "Met at …, Sacramento, CA" — the region-aware path the detail page renders.
+  const sacramentoPost = created.find((c) => c.title.startsWith('The Sacramento bar'))
+  if (sacramentoPost) {
+    await payload.update({
+      collection: 'people',
+      id: sam.id,
+      data: { metAt: sacramentoPost.placeId },
+      ...ctx,
+    })
+  }
+
   const publishedCount = posts.filter((p) => (p.status ?? 'published') === 'published').length
   console.log(
-    `Seed complete: 2 users, 3 countries, 5 cities, ${created.length + 1} places, 4 people, 5 tags, ${publishedCount} published posts + 1 draft.`,
+    `Seed complete: 2 users, 4 countries, 1 region, 6 cities, ${created.length + 1} places, 5 people, 5 tags, ${publishedCount} published posts + 1 draft.`,
   )
   console.log('Admin login: admin@example.com / password')
 

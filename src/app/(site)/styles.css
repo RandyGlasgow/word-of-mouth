@@ -648,6 +648,12 @@ a.tag:hover {
   margin-top: 0.3rem;
 }
 
+.rail__meta {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
+
 .rail__viewcount {
   font-family: var(--font-display);
   font-size: 1.6rem;

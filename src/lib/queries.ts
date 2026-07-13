@@ -1,7 +1,7 @@
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
-import type { City, Country, Person, Place, Post, User } from '@/payload-types'
+import type { City, Country, Person, Place, Post, Region, User } from '@/payload-types'
 
 /**
  * Data-access helpers for the public site. Every read here is scoped to
@@ -16,7 +16,7 @@ export const getClient = async () => getPayload({ config: await config })
  * (depth >= 3, since city/country now hang off the post's Place).
  */
 export type PopulatedPost = Omit<Post, 'place' | 'author' | 'referredBy'> & {
-  place: Place & { city: City & { country: Country } }
+  place: Place & { city: City & { country: Country; region?: Region | null } }
   author: User
   referredBy?: Person | null
 }
@@ -140,6 +140,13 @@ export const getPostsByAuthor = async (authorId: number): Promise<PopulatedPost[
  * Resolve a single published post by its full hierarchical path. Returns null
  * when no published post matches, or when the post's derived path doesn't line
  * up with the requested year/country/city segments.
+ *
+ * Uses depth 4 (vs. depth 3 for the list queries) so the Rail's encounter
+ * caption can resolve the region on `referredBy.metAt.city` — that region sits
+ * one hop deeper than the post's own city (post → referredBy → metAt → city →
+ * region), and depth 3 would return it as a bare id, silently dropping the
+ * ", CA" from "Sacramento, CA". This is a single bounded fetch, not a list
+ * broadcast, so the extra hop is cheap.
  */
 export const getPostByPath = async (
   year: number,
@@ -151,7 +158,7 @@ export const getPostByPath = async (
   const { docs } = await payload.find({
     collection: 'posts',
     where: { and: [publishedWhere, { slug: { equals: slug } }] },
-    depth: 3,
+    depth: 4,
     limit: 10,
     overrideAccess: false,
   })
