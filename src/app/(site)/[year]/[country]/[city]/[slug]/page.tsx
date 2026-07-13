@@ -24,8 +24,8 @@ export async function generateStaticParams() {
   const posts = await getAllPublishedPosts()
   return posts.map((post) => ({
     year: String(postYear(post)),
-    country: post.city.country.slug!,
-    city: post.city.slug!,
+    country: post.place.city.country.slug!,
+    city: post.place.city.slug!,
     slug: post.slug!,
   }))
 }
@@ -52,7 +52,7 @@ export default async function PostPage({
   const post = await getPostByPath(Number(yearParam), countrySlug, citySlug, slug)
   if (!post) notFound()
 
-  const moreFromCity = await getMoreFromCity(post.city.id, post.id)
+  const moreFromCity = await getMoreFromCity(post.place.city.id, post.id)
   const withDimensions = (
     m: ReturnType<typeof mediaInfo>,
   ): m is { url: string; alt: string; width: number; height: number } =>
@@ -71,8 +71,8 @@ export default async function PostPage({
           items={[
             { label: 'Home', href: '/' },
             { label: yearParam, href: `/${yearParam}` },
-            { label: post.city.country.name, href: `/${yearParam}/${countrySlug}` },
-            { label: post.city.name, href: `/${yearParam}/${countrySlug}/${citySlug}` },
+            { label: post.place.city.country.name, href: `/${yearParam}/${countrySlug}` },
+            { label: post.place.city.name, href: `/${yearParam}/${countrySlug}/${citySlug}` },
             { label: post.title },
           ]}
         />

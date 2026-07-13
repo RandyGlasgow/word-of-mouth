@@ -1,9 +1,8 @@
 import type { Payload } from 'payload'
-import type { User } from '../../src/payload-types'
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
-import { getTestPayload, lexicalBody, resetDb, seedPlace, seedUser } from '../helpers'
+import { getTestPayload, resetDb, seedPlace } from '../helpers'
 
 // Full Maps URLs only — the integration suite never hits the network, so
 // short-link resolution is covered by the mocked-fetch unit test instead.
@@ -12,7 +11,6 @@ const PIN_URL =
 
 describe('location hook (Local API)', () => {
   let payload: Payload
-  let author: User
   let cityId: number
 
   beforeAll(async () => {
@@ -21,31 +19,28 @@ describe('location hook (Local API)', () => {
 
   beforeEach(async () => {
     await resetDb(payload)
-    ;({ user: author } = await seedUser(payload, { email: 'loc@example.com', role: 'author' }))
     const { city } = await seedPlace(payload, { country: 'Portugal', city: 'Lisbon' })
     cityId = city.id
   })
 
-  const createPost = (location: Record<string, unknown>) =>
+  // The map pin now lives on a Place, so the hook is exercised through Places.
+  const createPlace = (location: Record<string, unknown>) =>
     payload.create({
-      collection: 'posts',
+      collection: 'places',
       data: {
-        title: 'A place worth finding',
-        body: lexicalBody(),
-        publishedDate: '2024-05-01T00:00:00.000Z',
+        name: 'A place worth finding',
         city: cityId,
-        author: author.id,
         location,
       },
       overrideAccess: true,
       context: { skipRevalidate: true },
     })
 
-  it('populates lat/lng and placeName from a mapsUrl on a post', async () => {
-    const post = await createPost({ mapsUrl: PIN_URL })
-    expect(post.location?.lat).toBeCloseTo(38.7069)
-    expect(post.location?.lng).toBeCloseTo(-9.1461)
-    expect(post.location?.placeName).toBe('Time Out Market')
+  it('populates lat/lng and placeName from a mapsUrl on a place', async () => {
+    const place = await createPlace({ mapsUrl: PIN_URL })
+    expect(place.location?.lat).toBeCloseTo(38.7069)
+    expect(place.location?.lng).toBeCloseTo(-9.1461)
+    expect(place.location?.placeName).toBe('Time Out Market')
   })
 
   it('populates lat/lng from a mapsUrl on a city', async () => {
@@ -61,18 +56,18 @@ describe('location hook (Local API)', () => {
   })
 
   it('does not overwrite a hand-authored placeName', async () => {
-    const post = await createPost({ mapsUrl: PIN_URL, placeName: 'My favourite spot' })
-    expect(post.location?.placeName).toBe('My favourite spot')
-    expect(post.location?.lat).toBeCloseTo(38.7069)
+    const place = await createPlace({ mapsUrl: PIN_URL, placeName: 'My favourite spot' })
+    expect(place.location?.placeName).toBe('My favourite spot')
+    expect(place.location?.lat).toBeCloseTo(38.7069)
   })
 
   it('keeps hand-edited coordinates across an unrelated update (URL unchanged)', async () => {
-    const post = await createPost({ mapsUrl: PIN_URL })
+    const place = await createPlace({ mapsUrl: PIN_URL })
 
     // Author nudges the pin by hand; mapsUrl stays the same.
     const edited = await payload.update({
-      collection: 'posts',
-      id: post.id,
+      collection: 'places',
+      id: place.id,
       data: { location: { mapsUrl: PIN_URL, lat: 12.34, lng: 56.78 } },
       overrideAccess: true,
       context: { skipRevalidate: true },
@@ -81,22 +76,22 @@ describe('location hook (Local API)', () => {
     expect(edited.location?.lng).toBeCloseTo(56.78)
 
     // An unrelated edit must not re-derive coordinates from the URL.
-    const retitled = await payload.update({
-      collection: 'posts',
-      id: post.id,
-      data: { title: 'Renamed' },
+    const renamed = await payload.update({
+      collection: 'places',
+      id: place.id,
+      data: { name: 'Renamed' },
       overrideAccess: true,
       context: { skipRevalidate: true },
     })
-    expect(retitled.location?.lat).toBeCloseTo(12.34)
-    expect(retitled.location?.lng).toBeCloseTo(56.78)
+    expect(renamed.location?.lat).toBeCloseTo(12.34)
+    expect(renamed.location?.lng).toBeCloseTo(56.78)
   })
 
   it('re-derives coordinates when the mapsUrl changes', async () => {
-    const post = await createPost({ mapsUrl: PIN_URL })
+    const place = await createPlace({ mapsUrl: PIN_URL })
     const moved = await payload.update({
-      collection: 'posts',
-      id: post.id,
+      collection: 'places',
+      id: place.id,
       data: { location: { mapsUrl: 'https://www.google.com/maps/@48.8584,2.2945,15z' } },
       overrideAccess: true,
       context: { skipRevalidate: true },
@@ -108,7 +103,7 @@ describe('location hook (Local API)', () => {
   it('rejects an unparseable URL with a validation error', async () => {
     // Payload's top-level message is generic ("field is invalid"); the
     // author-facing guidance lives in the field-scoped errors array.
-    await expect(createPost({ mapsUrl: 'https://example.com/not-a-map' })).rejects.toMatchObject({
+    await expect(createPlace({ mapsUrl: 'https://example.com/not-a-map' })).rejects.toMatchObject({
       data: {
         errors: [
           {

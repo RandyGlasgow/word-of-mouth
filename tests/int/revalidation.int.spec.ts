@@ -18,6 +18,7 @@ describe('revalidation hooks', () => {
   let author: User
   let countryId: number
   let cityId: number
+  let placeId: number
 
   beforeAll(async () => {
     payload = await getTestPayload()
@@ -26,9 +27,10 @@ describe('revalidation hooks', () => {
   beforeEach(async () => {
     await resetDb(payload)
     ;({ user: author } = await seedUser(payload, { email: 'rev@example.com', name: 'Rev Writer', role: 'author' }))
-    const { country, city } = await seedPlace(payload, { country: 'Portugal', city: 'Lisbon' })
+    const { country, city, place } = await seedPlace(payload, { country: 'Portugal', city: 'Lisbon' })
     countryId = country.id
     cityId = city.id
+    placeId = place.id
     vi.mocked(revalidatePath).mockClear()
   })
 
@@ -40,7 +42,7 @@ describe('revalidation hooks', () => {
         slug: 'a-night-in-alfama',
         body: lexicalBody(),
         publishedDate: '2023-06-01T00:00:00.000Z',
-        city: cityId,
+        place: placeId,
         author: author.id,
         _status: 'published',
       },
@@ -69,7 +71,7 @@ describe('revalidation hooks', () => {
         title: 'Quiet seed',
         body: lexicalBody(),
         publishedDate: '2023-06-01T00:00:00.000Z',
-        city: cityId,
+        place: placeId,
         author: author.id,
         _status: 'published',
       },
@@ -88,7 +90,7 @@ describe('revalidation hooks', () => {
         slug: 'to-be-removed',
         body: lexicalBody(),
         publishedDate: '2024-01-01T00:00:00.000Z',
-        city: cityId,
+        place: placeId,
         author: author.id,
         _status: 'published',
       },
@@ -111,7 +113,7 @@ describe('revalidation hooks', () => {
         title: 'Lisbon story',
         body: lexicalBody(),
         publishedDate: '2022-09-01T00:00:00.000Z',
-        city: cityId,
+        place: placeId,
         author: author.id,
         _status: 'published',
       },
@@ -139,7 +141,7 @@ describe('revalidation hooks', () => {
         title: 'Portugal story',
         body: lexicalBody(),
         publishedDate: '2021-03-01T00:00:00.000Z',
-        city: cityId,
+        place: placeId,
         author: author.id,
         _status: 'published',
       },

@@ -22,10 +22,10 @@ export async function generateStaticParams() {
   const seen = new Set<string>()
   const params: { year: string; country: string }[] = []
   for (const post of posts) {
-    const key = `${postYear(post)}/${post.city.country.slug}`
+    const key = `${postYear(post)}/${post.place.city.country.slug}`
     if (seen.has(key)) continue
     seen.add(key)
-    params.push({ year: String(postYear(post)), country: post.city.country.slug! })
+    params.push({ year: String(postYear(post)), country: post.place.city.country.slug! })
   }
   return params
 }
@@ -53,7 +53,7 @@ export default async function CountryPage({
   if (!country) notFound()
 
   const posts = (await getPostsInYear(year)).filter(
-    (p) => p.city.country.slug === countrySlug,
+    (p) => p.place.city.country.slug === countrySlug,
   )
   if (posts.length === 0) notFound()
 

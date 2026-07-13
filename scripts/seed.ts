@@ -48,16 +48,13 @@ const body = (paragraphs: string[]) => ({
 async function seed() {
   const payload = await getPayload({ config })
 
-  // --- Wipe content in a dependency-safe order. Clear people.metVia first so
-  // no person still points at a post we're about to delete. ---
+  // --- Wipe content in a dependency-safe order: posts and people reference
+  // places, places reference cities, cities reference countries. ---
   await payload.delete({ collection: 'post-views', where: { id: { exists: true } }, ...ctx })
-  const existingPeople = await payload.find({ collection: 'people', limit: 1000, depth: 0 })
-  for (const person of existingPeople.docs) {
-    await payload.update({ collection: 'people', id: person.id, data: { metVia: null }, ...ctx })
-  }
   await payload.delete({ collection: 'tags', where: { id: { exists: true } }, ...ctx })
   await payload.delete({ collection: 'posts', where: { id: { exists: true } }, ...ctx })
   await payload.delete({ collection: 'people', where: { id: { exists: true } }, ...ctx })
+  await payload.delete({ collection: 'places', where: { id: { exists: true } }, ...ctx })
   await payload.delete({ collection: 'cities', where: { id: { exists: true } }, ...ctx })
   await payload.delete({ collection: 'countries', where: { id: { exists: true } }, ...ctx })
   await payload.delete({ collection: 'users', where: { id: { exists: true } }, ...ctx })
@@ -163,25 +160,54 @@ async function seed() {
     ...ctx,
   })
 
-  // --- People (referral chain filled in below) ---
+  // --- Incidental Place: a spot with no write-up, where an encounter happened.
+  // It anchors the Place → Person → Place chain (rooftop → Tomás → Alfama bar). ---
+  const rooftop = await payload.create({
+    collection: 'places',
+    data: {
+      name: 'Maria’s rooftop',
+      city: lisbon.id,
+      note: 'A friend’s rooftop in Alfama — where a good night, and a good tip, started.',
+    },
+    ...ctx,
+  })
+
+  // --- People. metAt = where you met them (a Place), metThrough = who
+  // introduced you (a Person), metOn = when. Carlos' metAt is wired below to the
+  // Place behind his write-up, closing a full Place → Person → Place chain. ---
   const tomas = await payload.create({
     collection: 'people',
-    data: { name: 'Tomás', note: 'Bartender at a tiny place in Alfama, Lisbon.' },
+    data: {
+      name: 'Tomás',
+      note: 'Bartender at a tiny place in Alfama, Lisbon.',
+      metAt: rooftop.id,
+      metOn: '2025-03-20T00:00:00.000Z',
+    },
     ...ctx,
   })
   const yuki = await payload.create({
     collection: 'people',
-    data: { name: 'Yuki', note: 'Coffee roaster in Nakameguro. Tomás’ friend from culinary school.', metVia: { relationTo: 'people', value: tomas.id } },
+    data: {
+      name: 'Yuki',
+      note: 'Coffee roaster in Nakameguro. Tomás’ friend from culinary school.',
+      metThrough: tomas.id,
+      metOn: '2025-09-15T00:00:00.000Z',
+    },
     ...ctx,
   })
   const elena = await payload.create({
     collection: 'people',
-    data: { name: 'Elena', note: 'Guesthouse owner in Porto who knows every cellar by name.', metVia: { relationTo: 'people', value: yuki.id } },
+    data: {
+      name: 'Elena',
+      note: 'Guesthouse owner in Porto who knows every cellar by name.',
+      metThrough: yuki.id,
+      metOn: '2025-05-28T00:00:00.000Z',
+    },
     ...ctx,
   })
   const carlos = await payload.create({
     collection: 'people',
-    data: { name: 'Carlos', note: 'Mezcal maker outside Oaxaca. Met through a write-up, not a person.' },
+    data: { name: 'Carlos', note: 'Mezcal maker outside Oaxaca. Met at his palenque.' },
     ...ctx,
   })
 
@@ -321,8 +347,18 @@ async function seed() {
     },
   ]
 
-  const created: { title: string; id: number }[] = []
+  const created: { title: string; id: number; placeId: number }[] = []
   for (const p of posts) {
+    // A Post is a write-up of a Place; the pin and city live on the Place.
+    const place = await payload.create({
+      collection: 'places',
+      data: {
+        name: p.title,
+        city: p.city,
+        ...(p.mapsUrl ? { location: { mapsUrl: p.mapsUrl } } : {}),
+      },
+      ...ctx,
+    })
     const doc = await payload.create({
       collection: 'posts',
       data: {
@@ -330,32 +366,32 @@ async function seed() {
         excerpt: p.excerpt,
         body: body(p.paras),
         publishedDate: `${p.date}T00:00:00.000Z`,
-        city: p.city,
+        place: place.id,
         author: p.author,
         ...(p.referredBy ? { referredBy: p.referredBy } : {}),
-        ...(p.mapsUrl ? { location: { mapsUrl: p.mapsUrl } } : {}),
         ...(p.tags ? { tags: p.tags } : {}),
         _status: p.status ?? 'published',
       },
       ...ctx,
     })
-    created.push({ title: p.title, id: doc.id })
+    created.push({ title: p.title, id: doc.id, placeId: place.id })
   }
 
-  // Close the referral chain: Carlos was met via a specific write-up.
+  // Close a full Place → Person → Place chain: Carlos was met at the palenque
+  // his write-up is about, and he then pointed the way onward.
   const mezcalPost = created.find((c) => c.title.startsWith('Mezcal'))
   if (mezcalPost) {
     await payload.update({
       collection: 'people',
       id: carlos.id,
-      data: { metVia: { relationTo: 'posts', value: mezcalPost.id } },
+      data: { metAt: mezcalPost.placeId },
       ...ctx,
     })
   }
 
   const publishedCount = posts.filter((p) => (p.status ?? 'published') === 'published').length
   console.log(
-    `Seed complete: 2 users, 3 countries, 5 cities, 4 people, 5 tags, ${publishedCount} published posts + 1 draft.`,
+    `Seed complete: 2 users, 3 countries, 5 cities, ${created.length + 1} places, 4 people, 5 tags, ${publishedCount} published posts + 1 draft.`,
   )
   console.log('Admin login: admin@example.com / password')
 

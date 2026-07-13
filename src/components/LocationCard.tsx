@@ -1,10 +1,10 @@
 import type { PopulatedPost } from '@/lib/queries'
-import type { Post } from '@/payload-types'
+import type { Place } from '@/payload-types'
 
 import { LocationMapLoader } from './LocationMapLoader'
 
-/** The `location` group shared by Posts and Cities (see src/fields/location.ts). */
-export type PostLocation = NonNullable<Post['location']>
+/** The `location` group shared by Places and Cities (see src/fields/location.ts). */
+export type PostLocation = NonNullable<Place['location']>
 
 /** Zoom levels: tight on a specific place, wider when falling back to the city. */
 export const POST_ZOOM = 19
@@ -27,10 +27,11 @@ const hasUrl = (l?: PostLocation | null): l is PostLocation & { mapsUrl: string 
 export function resolvePostLocation(
   post: PopulatedPost,
 ): { location: PostLocation; zoom: number } | null {
-  const city = post.city?.location
-  if (hasCoords(post.location)) return { location: post.location, zoom: POST_ZOOM }
+  const place = post.place.location
+  const city = post.place.city?.location
+  if (hasCoords(place)) return { location: place, zoom: POST_ZOOM }
   if (hasCoords(city)) return { location: city, zoom: CITY_ZOOM }
-  if (hasUrl(post.location)) return { location: post.location, zoom: POST_ZOOM }
+  if (hasUrl(place)) return { location: place, zoom: POST_ZOOM }
   if (hasUrl(city)) return { location: city, zoom: CITY_ZOOM }
   return null
 }

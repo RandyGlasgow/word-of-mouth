@@ -56,7 +56,7 @@ export function Rail({
 
       {moreFromCity.length > 0 && (
         <section className="rail__card">
-          <p className="rail__label">More from {post.city.name}</p>
+          <p className="rail__label">More from {post.place.city.name}</p>
           <ul className="rail__links">
             {moreFromCity.map((p) => (
               <li key={p.id}>

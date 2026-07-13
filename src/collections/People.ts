@@ -34,10 +34,23 @@ export const People: CollectionConfig = {
       },
     },
     {
-      // The referral-graph edge: how this person entered the circle.
-      name: 'metVia',
+      // Where you met them — a Place (Post-backed or incidental). Optional.
+      name: 'metAt',
       type: 'relationship',
-      relationTo: ['people', 'posts'],
+      relationTo: 'places',
+    },
+    {
+      // Who introduced you. The human referral edge, separate from the place.
+      name: 'metThrough',
+      type: 'relationship',
+      relationTo: 'people',
+    },
+    {
+      name: 'metOn',
+      type: 'date',
+      admin: {
+        date: { pickerAppearance: 'dayOnly' },
+      },
     },
   ],
 }

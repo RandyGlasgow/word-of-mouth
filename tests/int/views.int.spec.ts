@@ -34,13 +34,18 @@ const seedPost = async (payload: Payload): Promise<number> => {
     data: { name: 'Lisbon', country: country.id },
     overrideAccess: true,
   })
+  const place = await payload.create({
+    collection: 'places',
+    data: { name: 'A night out spot', city: city.id },
+    overrideAccess: true,
+  })
   const post = await payload.create({
     collection: 'posts',
     data: {
       title: 'A night out in Lisbon',
       body: richText,
       publishedDate: '2026-05-01T00:00:00.000Z',
-      city: city.id,
+      place: place.id,
       author: user.id,
       _status: 'published',
     },

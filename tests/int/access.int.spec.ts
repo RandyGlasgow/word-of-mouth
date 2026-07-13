@@ -12,7 +12,7 @@ describe('access control', () => {
   let admin: User
   let authorA: User
   let authorB: User
-  let cityId: number
+  let placeId: number
 
   beforeAll(async () => {
     payload = await getTestPayload()
@@ -23,8 +23,8 @@ describe('access control', () => {
     ;({ user: admin } = await seedUser(payload, { email: 'admin@example.com', name: 'Admin', role: 'admin' }))
     ;({ user: authorA } = await seedUser(payload, { email: 'a@example.com', name: 'Ana', role: 'author' }))
     ;({ user: authorB } = await seedUser(payload, { email: 'b@example.com', name: 'Bo', role: 'author' }))
-    const { city } = await seedPlace(payload)
-    cityId = city.id
+    const { place } = await seedPlace(payload)
+    placeId = place.id
   })
 
   const makePost = async (author: User, status: 'draft' | 'published', title = 'A trip') =>
@@ -34,7 +34,7 @@ describe('access control', () => {
         title,
         body: lexicalBody(),
         publishedDate: '2023-06-01T00:00:00.000Z',
-        city: cityId,
+        place: placeId,
         author: author.id,
         _status: status,
       },
@@ -133,7 +133,7 @@ describe('access control', () => {
             title: 'Nope',
             body: lexicalBody(),
             publishedDate: '2023-06-01T00:00:00.000Z',
-            city: cityId,
+            place: placeId,
             author: authorA.id,
           },
           overrideAccess: false,

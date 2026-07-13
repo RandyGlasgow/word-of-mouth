@@ -1,7 +1,7 @@
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
-import type { City, Country, Person, Post, User } from '@/payload-types'
+import type { City, Country, Person, Place, Post, User } from '@/payload-types'
 
 /**
  * Data-access helpers for the public site. Every read here is scoped to
@@ -11,9 +11,12 @@ import type { City, Country, Person, Post, User } from '@/payload-types'
 
 export const getClient = async () => getPayload({ config: await config })
 
-/** A post with its city/country/author relationships populated (depth >= 2). */
-export type PopulatedPost = Omit<Post, 'city' | 'author' | 'referredBy'> & {
-  city: City & { country: Country }
+/**
+ * A post with its place → city → country and author relationships populated
+ * (depth >= 3, since city/country now hang off the post's Place).
+ */
+export type PopulatedPost = Omit<Post, 'place' | 'author' | 'referredBy'> & {
+  place: Place & { city: City & { country: Country } }
   author: User
   referredBy?: Person | null
 }
@@ -28,7 +31,7 @@ export const postYear = (post: Pick<Post, 'publishedDate'>): number =>
 
 /** Canonical URL for a fully populated post. */
 export const postHref = (post: PopulatedPost): string =>
-  `/${postYear(post)}/${post.city.country.slug}/${post.city.slug}/${post.slug}`
+  `/${postYear(post)}/${post.place.city.country.slug}/${post.place.city.slug}/${post.slug}`
 
 export const authorHref = (author: Pick<User, 'slug'>): string => `/authors/${author.slug}`
 
@@ -45,7 +48,7 @@ export const getRecentPosts = async (limit = 6): Promise<PopulatedPost[]> => {
     collection: 'posts',
     where: publishedWhere,
     sort: '-publishedDate',
-    depth: 2,
+    depth: 3,
     limit,
     overrideAccess: false,
   })
@@ -59,7 +62,7 @@ export const getAllPublishedPosts = async (): Promise<PopulatedPost[]> => {
     collection: 'posts',
     where: publishedWhere,
     sort: '-publishedDate',
-    depth: 2,
+    depth: 3,
     limit: 1000,
     overrideAccess: false,
   })
@@ -77,7 +80,7 @@ export const getPostsInYear = async (year: number): Promise<PopulatedPost[]> => 
     collection: 'posts',
     where: { and: [publishedWhere, yearRange(year)] },
     sort: '-publishedDate',
-    depth: 2,
+    depth: 3,
     limit: 1000,
     overrideAccess: false,
   })
@@ -126,7 +129,7 @@ export const getPostsByAuthor = async (authorId: number): Promise<PopulatedPost[
     collection: 'posts',
     where: { and: [publishedWhere, { author: { equals: authorId } }] },
     sort: '-publishedDate',
-    depth: 2,
+    depth: 3,
     limit: 1000,
     overrideAccess: false,
   })
@@ -148,7 +151,7 @@ export const getPostByPath = async (
   const { docs } = await payload.find({
     collection: 'posts',
     where: { and: [publishedWhere, { slug: { equals: slug } }] },
-    depth: 2,
+    depth: 3,
     limit: 10,
     overrideAccess: false,
   })
@@ -157,8 +160,8 @@ export const getPostByPath = async (
     posts.find(
       (p) =>
         postYear(p) === year &&
-        p.city?.slug === citySlug &&
-        p.city?.country?.slug === countrySlug,
+        p.place?.city?.slug === citySlug &&
+        p.place?.city?.country?.slug === countrySlug,
     ) ?? null
   )
 }
@@ -175,12 +178,12 @@ export const getMoreFromCity = async (
     where: {
       and: [
         publishedWhere,
-        { city: { equals: cityId } },
+        { 'place.city': { equals: cityId } },
         { id: { not_equals: excludePostId } },
       ],
     },
     sort: '-publishedDate',
-    depth: 2,
+    depth: 3,
     limit,
     overrideAccess: false,
   })
@@ -193,8 +196,9 @@ export const groupByCountry = (
 ): { country: Country; posts: PopulatedPost[] }[] => {
   const groups = new Map<string, { country: Country; posts: PopulatedPost[] }>()
   for (const post of posts) {
-    const key = post.city.country.slug ?? String(post.city.country.id)
-    if (!groups.has(key)) groups.set(key, { country: post.city.country, posts: [] })
+    const country = post.place.city.country
+    const key = country.slug ?? String(country.id)
+    if (!groups.has(key)) groups.set(key, { country, posts: [] })
     groups.get(key)!.posts.push(post)
   }
   return [...groups.values()]
@@ -206,8 +210,9 @@ export const groupByCity = (
 ): { city: City & { country: Country }; posts: PopulatedPost[] }[] => {
   const groups = new Map<string, { city: City & { country: Country }; posts: PopulatedPost[] }>()
   for (const post of posts) {
-    const key = post.city.slug ?? String(post.city.id)
-    if (!groups.has(key)) groups.set(key, { city: post.city, posts: [] })
+    const city = post.place.city
+    const key = city.slug ?? String(city.id)
+    if (!groups.has(key)) groups.set(key, { city, posts: [] })
     groups.get(key)!.posts.push(post)
   }
   return [...groups.values()]
@@ -216,6 +221,6 @@ export const groupByCity = (
 /** Count of distinct countries / cities across a set of posts. */
 export const coverageStats = (posts: PopulatedPost[]) => ({
   posts: posts.length,
-  countries: new Set(posts.map((p) => p.city.country.slug)).size,
-  cities: new Set(posts.map((p) => p.city.slug)).size,
+  countries: new Set(posts.map((p) => p.place.city.country.slug)).size,
+  cities: new Set(posts.map((p) => p.place.city.slug)).size,
 })

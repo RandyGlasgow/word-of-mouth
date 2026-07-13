@@ -83,6 +83,9 @@ map side needs nothing new.
 ### Changed: `Posts`
 
 - **Add** `place → places` (relationship, **required**). A Post is always about a Place.
+  A post's Place **must have a city** — it drives the `/[year]/[country]/[city]/[slug]`
+  URL — enforced by a field `validate`; cityless Places are valid only as incidental
+  encounter spots (`Person.metAt`).
 - **Remove** the inline `location` group — the pin now lives on the Post's Place.
 - **Remove** the `city` relationship — city is derived from `post.place.city`, rolled up to
   `post.place.city.country`.

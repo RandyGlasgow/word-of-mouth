@@ -19,7 +19,7 @@ export const getTestPayload = async (): Promise<Payload> => {
 /** Wipe all content collections. Call in beforeAll/beforeEach for isolation. */
 export const resetDb = async (payload: Payload): Promise<void> => {
   // Order matters: children before the collections they reference.
-  for (const slug of ['post-views', 'posts', 'people', 'cities', 'countries', 'media', 'users'] as const) {
+  for (const slug of ['post-views', 'posts', 'people', 'places', 'cities', 'countries', 'media', 'users'] as const) {
     await payload.delete({ collection: slug, where: {}, overrideAccess: true })
   }
 }
@@ -66,11 +66,18 @@ export const lexicalBody = (text = 'Body text.') => ({
   },
 })
 
-/** Seed a country + a city inside it, returning both. Bypasses access control. */
+/**
+ * Seed a country + a city inside it + a Place in that city, returning all three.
+ * A Post now attaches to a Place (not a City), so `place` is what most post
+ * fixtures wire up. Bypasses access control.
+ */
 export const seedPlace = async (
   payload: Payload,
-  { country = 'Portugal', city = 'Lisbon' }: { country?: string; city?: string } = {},
+  { country = 'Portugal', city = 'Lisbon', place }: { country?: string; city?: string; place?: string } = {},
 ) => {
+  // Default the Place name off the city so two distinct cities don't collide on
+  // the auto-generated (unique) Place slug.
+  const placeName = place ?? `${city} spot`
   const countryDoc = await payload.create({
     collection: 'countries',
     data: { name: country },
@@ -83,5 +90,11 @@ export const seedPlace = async (
     overrideAccess: true,
     context: { skipRevalidate: true },
   })
-  return { country: countryDoc, city: cityDoc }
+  const placeDoc = await payload.create({
+    collection: 'places',
+    data: { name: placeName, city: cityDoc.id },
+    overrideAccess: true,
+    context: { skipRevalidate: true },
+  })
+  return { country: countryDoc, city: cityDoc, place: placeDoc }
 }

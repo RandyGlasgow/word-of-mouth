@@ -42,12 +42,19 @@ const relId = (value: unknown): number | undefined => {
 const revalidatePostTree = async (post: Record<string, unknown>, req: PayloadRequest): Promise<void> => {
   const { payload } = req
 
-  const cityId = relId(post.city)
+  const placeId = relId(post.place)
   const authorId = relId(post.author)
-  if (cityId == null || authorId == null || post.publishedDate == null) return
+  if (placeId == null || authorId == null || post.publishedDate == null) return
 
-  const city = await payload.findByID({ collection: 'cities', id: cityId, depth: 0, req })
-  const countryId = relId(city.country)
+  // City (and country above it) now hang off the post's Place, and a Place's
+  // city is optional — fall back to the home/year/author pages when it's absent.
+  const place = await payload.findByID({ collection: 'places', id: placeId, depth: 0, req })
+  const cityId = relId(place.city)
+  const city =
+    cityId == null
+      ? undefined
+      : await payload.findByID({ collection: 'cities', id: cityId, depth: 0, req })
+  const countryId = city ? relId(city.country) : undefined
   const country =
     countryId == null
       ? undefined
@@ -56,7 +63,7 @@ const revalidatePostTree = async (post: Record<string, unknown>, req: PayloadReq
 
   const year = yearOf(post.publishedDate as string)
   const countrySlug = country?.slug
-  const citySlug = city.slug
+  const citySlug = city?.slug
 
   const paths = new Set<string>(['/', `/${year}`, `/authors/${author.slug}`])
   if (countrySlug) {
@@ -106,7 +113,7 @@ export const revalidateCity: CollectionAfterChangeHook = async ({ doc, req, cont
 
     const posts = await payload.find({
       collection: 'posts',
-      where: { and: [{ city: { equals: doc.id } }, { _status: { equals: 'published' } }] },
+      where: { and: [{ 'place.city': { equals: doc.id } }, { _status: { equals: 'published' } }] },
       depth: 0,
       limit: 1000,
       pagination: false,
@@ -148,7 +155,7 @@ export const revalidateCountry: CollectionAfterChangeHook = async ({ doc, req, c
     if (cityIds.length > 0) {
       const posts = await payload.find({
         collection: 'posts',
-        where: { and: [{ city: { in: cityIds } }, { _status: { equals: 'published' } }] },
+        where: { and: [{ 'place.city': { in: cityIds } }, { _status: { equals: 'published' } }] },
         depth: 0,
         limit: 1000,
         pagination: false,

@@ -309,15 +309,23 @@ export interface Person {
    * Who they are, e.g. "bartender in Lisbon"
    */
   note?: string | null;
-  metVia?:
-    | ({
-        relationTo: 'people';
-        value: number | Person;
-      } | null)
-    | ({
-        relationTo: 'posts';
-        value: number | Post;
-      } | null);
+  metAt?: (number | null) | Place;
+  metThrough?: (number | null) | Person;
+  metOn?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: number;
+  name: string;
+  /**
+   * Leave blank to generate from name
+   */
+  slug?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -350,29 +358,8 @@ export interface Post {
   };
   cover?: (number | null) | Media;
   gallery?: (number | Media)[] | null;
-  /**
-   * Paste a Google Maps link and the coordinates fill in on save.
-   */
-  location?: {
-    /**
-     * Paste a Google Maps link — a full browser URL or a maps.app.goo.gl share link. Coordinates and place name fill in when you save.
-     */
-    mapsUrl?: string | null;
-    /**
-     * Prefilled from the link when possible; edit freely.
-     */
-    placeName?: string | null;
-    /**
-     * Auto-filled from the link; hand-editable.
-     */
-    lat?: number | null;
-    /**
-     * Auto-filled from the link; hand-editable.
-     */
-    lng?: number | null;
-  };
   publishedDate: string;
-  city: number | City;
+  place: number | Place;
   /**
    * Who suggested this place (optional)
    */
@@ -385,20 +372,6 @@ export interface Post {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tags".
- */
-export interface Tag {
-  id: number;
-  name: string;
-  /**
-   * Leave blank to generate from name
-   */
-  slug?: string | null;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -637,7 +610,9 @@ export interface PeopleSelect<T extends boolean = true> {
   slug?: T;
   photo?: T;
   note?: T;
-  metVia?: T;
+  metAt?: T;
+  metThrough?: T;
+  metOn?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -662,16 +637,8 @@ export interface PostsSelect<T extends boolean = true> {
   body?: T;
   cover?: T;
   gallery?: T;
-  location?:
-    | T
-    | {
-        mapsUrl?: T;
-        placeName?: T;
-        lat?: T;
-        lng?: T;
-      };
   publishedDate?: T;
-  city?: T;
+  place?: T;
   referredBy?: T;
   tags?: T;
   author?: T;
