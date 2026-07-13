@@ -3,9 +3,11 @@
  *
  * Wipes the content collections and rebuilds a small but realistic travel
  * journal: one admin + one author, four countries, one region (California),
- * six cities, five people (with a "met via" chain), nine published posts across
- * 2025/2026, and one draft. All writes go through Payload's Local API so
- * validation and hooks run exactly as they would in production.
+ * six cities, eleven places, five people (with a "met at / met through" chain),
+ * nine published posts across 2025/2026, and one draft. Places are created
+ * first as first-class spots; posts and people then link to them (post.place,
+ * person.metAt). All writes go through Payload's Local API so validation and
+ * hooks run exactly as they would in production.
  *
  * Run:
  *   DATABASE_URL=postgres://wom:wom@127.0.0.1:5432/word_of_mouth \
@@ -189,21 +191,61 @@ async function seed() {
     ...ctx,
   })
 
-  // --- Incidental Place: a spot with no write-up, where an encounter happened.
-  // It anchors the Place → Person → Place chain (rooftop → Tomás → Alfama bar). ---
-  const rooftop = await payload.create({
-    collection: 'places',
-    data: {
-      name: 'Maria’s rooftop',
-      city: lisbon.id,
-      note: 'A friend’s rooftop in Alfama — where a good night, and a good tip, started.',
-    },
-    ...ctx,
+  // --- Places: first-class spots on the map, created before posts and people
+  // so both simply link to them — a Post is a write-up of a Place, and People
+  // are met at Places. ---
+  let placeCount = 0
+  const place = async (data: { name: string; city?: number; note?: string; mapsUrl?: string }) => {
+    placeCount++
+    return payload.create({
+      collection: 'places',
+      data: {
+        name: data.name,
+        ...(data.city ? { city: data.city } : {}),
+        ...(data.note ? { note: data.note } : {}),
+        ...(data.mapsUrl ? { location: { mapsUrl: data.mapsUrl } } : {}),
+      },
+      ...ctx,
+    })
+  }
+
+  // Incidental Place: a spot with no write-up, where an encounter happened. It
+  // anchors the Place → Person → Place chain (rooftop → Tomás → Alfama bar).
+  const rooftop = await place({
+    name: 'Maria’s rooftop',
+    city: lisbon.id,
+    note: 'A friend’s rooftop in Alfama — where a good night, and a good tip, started.',
   })
 
+  // Places that get write-ups (one per post below).
+  const alfamaBar = await place({
+    name: 'The Alfama bar with no sign',
+    city: lisbon.id,
+    // Post-level spot: exercises the Maps-URL hook and the rail map at place zoom.
+    mapsUrl:
+      'https://www.google.com/maps/place/Tasca+do+Chico/@38.7101,-9.1444,17z/data=!3m1!4b1!4m6!3m5!1s0x0:0x0!8m2!3d38.7112696!4d-9.1315945',
+  })
+  const portoCellar = await place({ name: 'Porto in the river fog', city: porto.id })
+  const nakameguroCounter = await place({
+    name: 'A counter for eight in Nakameguro',
+    city: tokyo.id,
+  })
+  const kyotoTemples = await place({ name: 'Kyoto before the crowds', city: kyoto.id })
+  const palenque = await place({ name: 'Mezcal, straight from the still', city: oaxaca.id })
+  const tram28 = await place({ name: 'The Lisbon tram to nowhere in particular', city: lisbon.id })
+  const oaxacaMarket = await place({ name: 'Second morning in Oaxaca', city: oaxaca.id })
+  const alleyBar = await place({
+    name: 'The Sacramento bar behind the alley door',
+    city: sacramento.id,
+    // Pins the alley bar on the rail map like Alfama does.
+    mapsUrl: 'https://www.google.com/maps/place/Sacramento,+CA/@38.5810,-121.4939,17z',
+  })
+  const tokyoReturn = await place({ name: 'Tokyo, the second time', city: tokyo.id })
+  const sintra = await place({ name: 'Draft: notes from Sintra', city: lisbon.id })
+
   // --- People. metAt = where you met them (a Place), metThrough = who
-  // introduced you (a Person), metOn = when. Carlos' metAt is wired below to the
-  // Place behind his write-up, closing a full Place → Person → Place chain. ---
+  // introduced you (a Person), metOn = when. Carlos was met at the palenque his
+  // write-up is about, closing a full Place → Person → Place chain. ---
   const tomas = await payload.create({
     collection: 'people',
     data: {
@@ -236,14 +278,22 @@ async function seed() {
   })
   const carlos = await payload.create({
     collection: 'people',
-    data: { name: 'Carlos', note: 'Mezcal maker outside Oaxaca. Met at his palenque.' },
+    data: {
+      name: 'Carlos',
+      note: 'Mezcal maker outside Oaxaca. Met at his palenque.',
+      metAt: palenque.id,
+    },
     ...ctx,
   })
+  // Sam tends (and recommended) the Sacramento bar, so that Place is also where
+  // we met him. Its city carries a region, so the encounter caption reads
+  // "Met at …, Sacramento, CA" — the region-aware path the detail page renders.
   const sam = await payload.create({
     collection: 'people',
     data: {
       name: 'Sam',
       note: 'Bartender in downtown Sacramento who keeps a list of where to go next.',
+      metAt: alleyBar.id,
       metThrough: elena.id,
       metOn: '2026-04-02T00:00:00.000Z',
     },
@@ -259,30 +309,26 @@ async function seed() {
   const views = await tag('views')
   const markets = await tag('markets')
 
-  // --- Posts ---
+  // --- Posts: each is a write-up of one of the Places created above. ---
   type PostSeed = {
     title: string
-    city: number
+    place: number
     author: number
     referredBy?: number
     date: string
     excerpt: string
     paras: string[]
     status?: 'published' | 'draft'
-    mapsUrl?: string
     tags?: number[]
   }
 
   const posts: PostSeed[] = [
     {
       title: 'The Alfama bar with no sign',
-      city: lisbon.id,
+      place: alfamaBar.id,
       author: admin.id,
       referredBy: tomas.id,
       date: '2025-04-12',
-      // Post-level spot: exercises the Maps-URL hook and the rail map at place zoom.
-      mapsUrl:
-        'https://www.google.com/maps/place/Tasca+do+Chico/@38.7101,-9.1444,17z/data=!3m1!4b1!4m6!3m5!1s0x0:0x0!8m2!3d38.7112696!4d-9.1315945',
       tags: [bars],
       excerpt: 'A doorway, a curtain, and the best vinho verde I’ve had — on a bartender’s say-so.',
       paras: [
@@ -293,7 +339,7 @@ async function seed() {
     },
     {
       title: 'Porto in the river fog',
-      city: porto.id,
+      place: portoCellar.id,
       author: author.id,
       referredBy: elena.id,
       date: '2025-06-03',
@@ -306,7 +352,7 @@ async function seed() {
     },
     {
       title: 'A counter for eight in Nakameguro',
-      city: tokyo.id,
+      place: nakameguroCounter.id,
       author: admin.id,
       referredBy: yuki.id,
       date: '2025-09-21',
@@ -319,7 +365,7 @@ async function seed() {
     },
     {
       title: 'Kyoto before the crowds',
-      city: kyoto.id,
+      place: kyotoTemples.id,
       author: author.id,
       date: '2025-11-08',
       tags: [views],
@@ -331,7 +377,7 @@ async function seed() {
     },
     {
       title: 'Mezcal, straight from the still',
-      city: oaxaca.id,
+      place: palenque.id,
       author: admin.id,
       referredBy: carlos.id,
       date: '2026-01-17',
@@ -344,7 +390,7 @@ async function seed() {
     },
     {
       title: 'The Lisbon tram to nowhere in particular',
-      city: lisbon.id,
+      place: tram28.id,
       author: author.id,
       date: '2026-02-25',
       tags: [views],
@@ -355,7 +401,7 @@ async function seed() {
     },
     {
       title: 'Second morning in Oaxaca',
-      city: oaxaca.id,
+      place: oaxacaMarket.id,
       author: admin.id,
       date: '2026-03-30',
       tags: [markets, food],
@@ -366,12 +412,10 @@ async function seed() {
     },
     {
       title: 'The Sacramento bar behind the alley door',
-      city: sacramento.id,
+      place: alleyBar.id,
       author: admin.id,
       referredBy: sam.id,
       date: '2026-04-08',
-      // Post-level spot: pins the alley bar on the rail map like Alfama does.
-      mapsUrl: 'https://www.google.com/maps/place/Sacramento,+CA/@38.5810,-121.4939,17z',
       tags: [bars],
       excerpt: 'Sam sent me down an alley off K Street to a room that runs on regulars and rye.',
       paras: [
@@ -381,7 +425,7 @@ async function seed() {
     },
     {
       title: 'Tokyo, the second time',
-      city: tokyo.id,
+      place: tokyoReturn.id,
       author: author.id,
       date: '2026-05-14',
       tags: [coffee, food],
@@ -392,7 +436,7 @@ async function seed() {
     },
     {
       title: 'Draft: notes from Sintra',
-      city: lisbon.id,
+      place: sintra.id,
       author: admin.id,
       date: '2026-06-01',
       excerpt: 'Unfinished — a day trip I haven’t written up yet.',
@@ -401,26 +445,15 @@ async function seed() {
     },
   ]
 
-  const created: { title: string; id: number; placeId: number }[] = []
   for (const p of posts) {
-    // A Post is a write-up of a Place; the pin and city live on the Place.
-    const place = await payload.create({
-      collection: 'places',
-      data: {
-        name: p.title,
-        city: p.city,
-        ...(p.mapsUrl ? { location: { mapsUrl: p.mapsUrl } } : {}),
-      },
-      ...ctx,
-    })
-    const doc = await payload.create({
+    await payload.create({
       collection: 'posts',
       data: {
         title: p.title,
         excerpt: p.excerpt,
         body: body(p.paras),
         publishedDate: `${p.date}T00:00:00.000Z`,
-        place: place.id,
+        place: p.place,
         author: p.author,
         ...(p.referredBy ? { referredBy: p.referredBy } : {}),
         ...(p.tags ? { tags: p.tags } : {}),
@@ -428,37 +461,11 @@ async function seed() {
       },
       ...ctx,
     })
-    created.push({ title: p.title, id: doc.id, placeId: place.id })
-  }
-
-  // Close a full Place → Person → Place chain: Carlos was met at the palenque
-  // his write-up is about, and he then pointed the way onward.
-  const mezcalPost = created.find((c) => c.title.startsWith('Mezcal'))
-  if (mezcalPost) {
-    await payload.update({
-      collection: 'people',
-      id: carlos.id,
-      data: { metAt: mezcalPost.placeId },
-      ...ctx,
-    })
-  }
-
-  // Sam tends (and recommended) the Sacramento bar, so that Place is also where
-  // we met him. Its city carries a region, so the encounter caption reads
-  // "Met at …, Sacramento, CA" — the region-aware path the detail page renders.
-  const sacramentoPost = created.find((c) => c.title.startsWith('The Sacramento bar'))
-  if (sacramentoPost) {
-    await payload.update({
-      collection: 'people',
-      id: sam.id,
-      data: { metAt: sacramentoPost.placeId },
-      ...ctx,
-    })
   }
 
   const publishedCount = posts.filter((p) => (p.status ?? 'published') === 'published').length
   console.log(
-    `Seed complete: 2 users, 4 countries, 1 region, 6 cities, ${created.length + 1} places, 5 people, 5 tags, ${publishedCount} published posts + 1 draft.`,
+    `Seed complete: 2 users, 4 countries, 1 region, 6 cities, ${placeCount} places, 5 people, 5 tags, ${publishedCount} published posts + 1 draft.`,
   )
   console.log('Admin login: admin@example.com / password')
 
