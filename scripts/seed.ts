@@ -370,6 +370,8 @@ async function seed() {
       author: admin.id,
       referredBy: sam.id,
       date: '2026-04-08',
+      // Post-level spot: pins the alley bar on the rail map like Alfama does.
+      mapsUrl: 'https://www.google.com/maps/place/Sacramento,+CA/@38.5810,-121.4939,17z',
       tags: [bars],
       excerpt: 'Sam sent me down an alley off K Street to a room that runs on regulars and rye.',
       paras: [
