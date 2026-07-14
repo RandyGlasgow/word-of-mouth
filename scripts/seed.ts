@@ -217,31 +217,47 @@ async function seed() {
     note: 'A friend’s rooftop in Alfama — where a good night, and a good tip, started.',
   })
 
-  // Places that get write-ups (one per post below).
+  // Places that get write-ups (one per post below). Each has its own identity
+  // — the spot's actual name — distinct from the title of the post about it.
   const alfamaBar = await place({
-    name: 'The Alfama bar with no sign',
+    name: 'Tasca do Chico',
     city: lisbon.id,
+    note: 'Bead curtain, no sign. Knock and ask for the green one.',
     // Post-level spot: exercises the Maps-URL hook and the rail map at place zoom.
     mapsUrl:
       'https://www.google.com/maps/place/Tasca+do+Chico/@38.7101,-9.1444,17z/data=!3m1!4b1!4m6!3m5!1s0x0:0x0!8m2!3d38.7112696!4d-9.1315945',
   })
-  const portoCellar = await place({ name: 'Porto in the river fog', city: porto.id })
-  const nakameguroCounter = await place({
-    name: 'A counter for eight in Nakameguro',
-    city: tokyo.id,
+  const portoCellar = await place({
+    name: 'Armazém do Douro',
+    city: porto.id,
+    note: 'A cellar across the water in Gaia. Doesn’t open to tourists.',
   })
-  const kyotoTemples = await place({ name: 'Kyoto before the crowds', city: kyoto.id })
-  const palenque = await place({ name: 'Mezcal, straight from the still', city: oaxaca.id })
-  const tram28 = await place({ name: 'The Lisbon tram to nowhere in particular', city: lisbon.id })
-  const oaxacaMarket = await place({ name: 'Second morning in Oaxaca', city: oaxaca.id })
+  const nakameguroCounter = await place({
+    name: 'Counter Hachi',
+    city: tokyo.id,
+    note: 'Eight seats, no menu, no reservations.',
+  })
+  const kyotoTemples = await place({ name: 'Saihō-ji moss garden', city: kyoto.id })
+  const palenque = await place({
+    name: 'Palenque de Carlos',
+    city: oaxaca.id,
+    note: 'An hour of dirt road out of the city, past the agave fields.',
+  })
+  const tram28 = await place({ name: 'Tram 28', city: lisbon.id })
+  const oaxacaMarket = await place({ name: 'Mercado 20 de Noviembre', city: oaxaca.id })
   const alleyBar = await place({
-    name: 'The Sacramento bar behind the alley door',
+    name: 'Back Bar on K',
     city: sacramento.id,
+    note: 'Down the alley off K Street — the unmarked door, the nod.',
     // Pins the alley bar on the rail map like Alfama does.
     mapsUrl: 'https://www.google.com/maps/place/Sacramento,+CA/@38.5810,-121.4939,17z',
   })
-  const tokyoReturn = await place({ name: 'Tokyo, the second time', city: tokyo.id })
-  const sintra = await place({ name: 'Draft: notes from Sintra', city: lisbon.id })
+  const tokyoReturn = await place({
+    name: 'Yuki’s roastery',
+    city: tokyo.id,
+    note: 'The Nakameguro roastery that started the Tokyo list.',
+  })
+  const sintra = await place({ name: 'Quinta da Regaleira', city: lisbon.id })
 
   // --- People. metAt = where you met them (a Place), metThrough = who
   // introduced you (a Person), metOn = when. Carlos was met at the palenque his
